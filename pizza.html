@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Pizza Party Interface</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #FF6347; /* Tomato red for pizza sauce */
+            font-family: monospace;
+            overflow: hidden;
+        }
+        
+        #container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #header {
+            position: absolute;
+            top: -10px;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-bottom: 1px solid #333;
+            z-index: 100;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-pizza {
+            width: 30px;
+            height: 30px;
+            background-color: #FFA500; /* Pizza crust color */
+            border-radius: 50%;
+            margin-right: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .logo-pizza::before {
+            content: "";
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 20px;
+            height: 20px;
+            background-color: #FF6347; /* Tomato sauce */
+            border-radius: 50%;
+        }
+        
+        .logo-text {
+            color: #FFA500; /* Pizza crust color */
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .status {
+            color: #32CD32; /* Lime green */
+        }
+        
+        .timer {
+            color: #32CD32; /* Lime green */
+        }
+        
+        #pizza-container {
+            position: relative;
+            height: 100%;
+            border-right: 1px solid #333;
+        }
+        
+        #pizza-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        #data-container {
+            padding: 20px;
+            margin-top: 20px;
+            height: 100%;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #FF6347;
+            padding-bottom: 10px;
+        }
+        
+        .section-title {
+            color: #FF6347;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .data-label {
+            text-align: right;
+        }
+        
+        .data-value {
+            color: #32CD32; /* Lime green */
+            margin-left: 20px;
+        }
+        
+        .warning {
+            color: #FF6347;
+            margin: 15px 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 15px;
+            background-color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #32CD32; /* Lime green */
+            width: 20%; /* Lower for comedic effect */
+        }
+        
+        .hex-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+        
+        .hex {
+            width: 30px;
+            height: 30px;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        }
+        
+        .hex-active {
+            background-color: #32CD32; /* Lime green */
+        }
+        
+        .hex-inactive {
+            background-color: #444;
+        }
+        
+        #terminal {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-top: 1px solid #333;
+        }
+        
+        .command-input {
+            background-color: transparent;
+            border: none;
+            color: #FF6347;
+            font-family: monospace;
+            font-size: 16px;
+            width: 90%;
+            outline: none;
+        }
+        
+        #terminal-output {
+            color: #32CD32; /* Lime green */
+            font-family: monospace;
+            margin-bottom: 10px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        
+        /* Scan line effect */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                rgba(255, 255, 255, 0) 50%,
+                rgba(0, 0, 0, 0.5) 50%
+            );
+            background-size: 100% 6px;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0.4;
+            animation: flicker 0.15s infinite;
+        }
+        
+        @keyframes flicker {
+            0% { opacity: 0.4; }
+            50% { opacity: 0.3; }
+            100% { opacity: 0.4; }
+        }
+        
+        /* CRT glow effect */
+        .crt-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 150px rgba(50, 205, 50, 0.4); /* Green glow */
+            pointer-events: none;
+            z-index: 999;
+        }
+        
+        .alarm {
+            animation: alarm 0.5s infinite;
+        }
+        
+        @keyframes alarm {
+            0% { background-color: #000; }
+            50% { background-color: #500; }
+            100% { background-color: #000; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Scan line effects -->
+    <div class="scanlines"></div>
+    <div class="crt-glow"></div>
+    
+    <div id="header">
+        <div class="logo">
+            <div class="logo-pizza"></div>
+            <div class="logo-text">PIZZA PARTY TRACKER</div>
+        </div>
+        <div class="status">IT DEPARTMENT MORALE STATUS: <span id="morale-status">LOW</span></div>
+        <div class="timer">TIME SINCE LAST RAISE: <span id="countdown">427:15:36</span></div>
+        <div class="subtitle" style="position: absolute; top: 40px; left: 0; width: 100%; text-align: center; color: #FF6347; font-size: 14px;">MANAGEMENT MORALE ENHANCEMENT TOOL v2.5</div>
+    </div>
+
+    <div id="container">
+        <div id="pizza-container">
+            <div id="pizza-canvas"></div>
+        </div>
+        <div id="data-container">
+            <div class="section">
+                <div class="section-title">PIZZA ANALYSIS</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="pizza-progress"></div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">SIZE:</div>
+                    <div class="data-value">14 inches</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">COST:</div>
+                    <div class="data-value">$12.99</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">TEMP:</div>
+                    <div class="data-value">39.5°C</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">TOPPINGS:</div>
+                    <div class="data-value" id="toppings-count">2</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">CRUST:</div>
+                    <div class="data-value">THIN</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">SLICES:</div>
+                    <div class="data-value">8</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">COST-SAVING:</div>
+                    <div class="data-value">$<span id="cost-saving">4,250</span></div>
+                </div>
+                <div class="warning">WARNING: PIZZA NOT A SUBSTITUTE FOR COMPETITIVE COMPENSATION</div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">MORALE BOOST CONFIGURATION</div>
+                <div class="hex-container" id="morale-hexes">
+                    <div class="hex hex-active"></div>
+                    <div class="hex hex-inactive"></div>
+                    <div class="hex hex-active"></div>
+                    <div class="hex hex-inactive"></div>
+                    <div class="hex hex-inactive"></div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">EFFECTIVENESS:</div>
+                    <div class="data-value"><span id="morale-effectiveness">12.3</span>%</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">SATISFACTION:</div>
+                    <div class="data-value" id="satisfaction-level">LOW</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">STRATEGY:</div>
+                    <div class="data-value">PIZZA-INSTEAD-OF-PAY</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">MODE:</div>
+                    <div class="data-value">COST-SAVING</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">SCORE:</div>
+                    <div class="data-value"><span id="manager-score">0</span> POINTS</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">MANAGEMENT ANALYSIS</div>
+                <div class="data-row">
+                    <div class="data-label">CEO:</div>
+                    <div class="data-value">APPROVED</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">CFO:</div>
+                    <div class="data-value">APPROVED</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">HR:</div>
+                    <div class="data-value" id="hr-status">CALCULATING ROI...</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">TERMINAL</div>
+                <div id="terminal-output">
+                    <!-- Terminal output will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="terminal">
+        <span>IT&gt;</span>
+        <input type="text" class="command-input" value="deliverPizza" spellcheck="false">
+    </div>
+
+    <script>
+        // Initialize Three.js
+        let scene, camera, renderer;
+        let pizza, toppings = [];
+        let rotationSpeed = 0.007;
+        let moraleLevel = 0; // 0 = LOW, 1 = MODERATE, 2 = ADEQUATE, 3 = TEMPORARY
+        let managerScore = 0;
+        let toppingTypes = ['pepperoni', 'mushroom', 'olive', 'pineapple', 'bell_pepper'];
+        let activeToppings = ['pepperoni']; // Start with just pepperoni
+
+        function init() {
+            // Create scene
+            scene = new THREE.Scene();
+            
+            // Create camera with 45-degree angle
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / 2 / window.innerHeight, 0.1, 1000);
+            camera.position.z = 3;
+            camera.position.y = 3; // Position camera higher for top-down view
+            camera.lookAt(0, 0, 0); // Look at the center of the pizza
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth / 2, window.innerHeight);
+            renderer.setClearColor(0x000000, 0);
+            document.getElementById('pizza-canvas').appendChild(renderer.domElement);
+            
+            // Create pizza (flattened cylinder)
+            const geometry = new THREE.CylinderGeometry(2, 2, 0.3, 32);
+            
+            // Create pizza material
+            const material = new THREE.MeshBasicMaterial({ color: 0xFFA500, wireframe: true });
+            
+            // Create pizza with wireframe
+            pizza = new THREE.Mesh(geometry, material);
+            scene.add(pizza);
+            
+            // Add slice dividers (8 slices)
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const lineMaterial = new THREE.LineBasicMaterial({ color: 0xFF6347 });
+                const points = [];
+                points.push(new THREE.Vector3(0, 0, 0));
+                points.push(new THREE.Vector3(Math.cos(angle) * 2, 0, Math.sin(angle) * 2));
+                const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+                const line = new THREE.Line(lineGeometry, lineMaterial);
+                scene.add(line);
+            }
+            
+            // Add sauce layer (thin red disk)
+            const sauceGeometry = new THREE.CylinderGeometry(1.9, 1.9, 0.05, 32);
+            const sauceMaterial = new THREE.MeshBasicMaterial({ color: 0xFF4500, wireframe: true });
+            const sauce = new THREE.Mesh(sauceGeometry, sauceMaterial);
+            sauce.position.y = 0.15;
+            scene.add(sauce);
+            
+            // Add cheese (yellow lines crisscrossing the pizza)
+            const cheeseGeometry = new THREE.CylinderGeometry(1.85, 1.85, 0.05, 32);
+            const cheeseMaterial = new THREE.MeshBasicMaterial({ color: 0xFFD700, wireframe: true });
+            const cheese = new THREE.Mesh(cheeseGeometry, cheeseMaterial);
+            cheese.position.y = 0.2;
+            scene.add(cheese);
+            
+            // Add initial toppings
+            updateToppings();
+            
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+            
+            // Start animation
+            animate();
+            
+            // Update countdown (time since last raise - always increasing)
+            setInterval(updateTimeSinceRaise, 1000);
+            
+            // Simulate HR verification
+            setTimeout(() => {
+                document.getElementById('hr-status').textContent = 'APPROVED';
+            }, 5000);
+            
+            // Add random CRT flicker effect
+            setInterval(() => {
+                if (Math.random() > 0.97) {
+                    document.querySelector('.scanlines').style.opacity = '0.7';
+                    setTimeout(() => {
+                        document.querySelector('.scanlines').style.opacity = '0.4';
+                    }, 100);
+                }
+            }, 500);
+            
+            // Add command input handling
+            setupCommandInput();
+            
+            // Update UI elements
+            updateMoraleDisplay();
+        }
+        
+        function updateToppings() {
+            // Clear existing toppings
+            for (let topping of toppings) {
+                scene.remove(topping);
+            }
+            toppings = [];
+            
+            // Add pepperoni (red disks)
+            if (activeToppings.includes('pepperoni')) {
+                for (let i = 0; i < 20; i++) {
+                    const toppingGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.05, 8);
+                    const toppingMaterial = new THREE.MeshBasicMaterial({ color: 0xFF0000 });
+                    const topping = new THREE.Mesh(toppingGeometry, toppingMaterial);
+                    
+                    // Random position on the pizza
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * 1.8;
+                    topping.position.x = Math.cos(angle) * distance;
+                    topping.position.z = Math.sin(angle) * distance;
+                    topping.position.y = 0.25;
+                    
+                    scene.add(topping);
+                    toppings.push(topping);
+                }
+            }
+            
+            // Add mushrooms (white cylinders)
+            if (activeToppings.includes('mushroom')) {
+                for (let i = 0; i < 15; i++) {
+                    const stemGeometry = new THREE.CylinderGeometry(0.03, 0.03, 0.1, 8);
+                    const capGeometry = new THREE.SphereGeometry(0.08, 8, 4, 0, Math.PI * 2, 0, Math.PI / 2);
+                    const mushroomMaterial = new THREE.MeshBasicMaterial({ color: 0xEEEEEE });
+                    
+                    const stem = new THREE.Mesh(stemGeometry, mushroomMaterial);
+                    const cap = new THREE.Mesh(capGeometry, mushroomMaterial);
+                    cap.position.y = 0.05;
+                    
+                    const mushroom = new THREE.Group();
+                    mushroom.add(stem);
+                    mushroom.add(cap);
+                    
+                    // Random position on the pizza
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * 1.7;
+                    mushroom.position.x = Math.cos(angle) * distance;
+                    mushroom.position.z = Math.sin(angle) * distance;
+                    mushroom.position.y = 0.25;
+                    
+                    scene.add(mushroom);
+                    toppings.push(mushroom);
+                }
+            }
+            
+            // Add olives (black rings)
+            if (activeToppings.includes('olive')) {
+                for (let i = 0; i < 12; i++) {
+                    const ringGeometry = new THREE.TorusGeometry(0.06, 0.02, 8, 12);
+                    const oliveMaterial = new THREE.MeshBasicMaterial({ color: 0x111111 });
+                    const olive = new THREE.Mesh(ringGeometry, oliveMaterial);
+                    
+                    // Random position and rotation
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * 1.7;
+                    olive.position.x = Math.cos(angle) * distance;
+                    olive.position.z = Math.sin(angle) * distance;
+                    olive.position.y = 0.25;
+                    olive.rotation.x = Math.PI / 2; // Lay flat
+                    
+                    scene.add(olive);
+                    toppings.push(olive);
+                }
+            }
+            
+            // Add pineapple (yellow triangles)
+            if (activeToppings.includes('pineapple')) {
+                for (let i = 0; i < 10; i++) {
+                    const pineappleGeometry = new THREE.ConeGeometry(0.07, 0.14, 4);
+                    const pineappleMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFF00 });
+                    const pineapple = new THREE.Mesh(pineappleGeometry, pineappleMaterial);
+                    
+                    // Random position
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * 1.7;
+                    pineapple.position.x = Math.cos(angle) * distance;
+                    pineapple.position.z = Math.sin(angle) * distance;
+                    pineapple.position.y = 0.25;
+                    pineapple.rotation.x = Math.PI / 2; // Lay flat
+                    
+                    scene.add(pineapple);
+                    toppings.push(pineapple);
+                }
+            }
+            
+            // Add bell peppers (green curved lines)
+            if (activeToppings.includes('bell_pepper')) {
+                for (let i = 0; i < 15; i++) {
+                    const curve = new THREE.CubicBezierCurve3(
+                        new THREE.Vector3(-0.1, 0, 0),
+                        new THREE.Vector3(-0.05, 0, 0.05),
+                        new THREE.Vector3(0.05, 0, 0.05),
+                        new THREE.Vector3(0.1, 0, 0)
+                    );
+                    
+                    const points = curve.getPoints(10);
+                    const pepperGeometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const pepperMaterial = new THREE.LineBasicMaterial({ color: 0x00FF00 });
+                    const pepper = new THREE.Line(pepperGeometry, pepperMaterial);
+                    
+                    // Random position and rotation
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * 1.7;
+                    pepper.position.x = Math.cos(angle) * distance;
+                    pepper.position.z = Math.sin(angle) * distance;
+                    pepper.position.y = 0.25;
+                    pepper.rotation.y = Math.random() * Math.PI * 2;
+                    
+                    scene.add(pepper);
+                    toppings.push(pepper);
+                }
+            }
+            
+            // Update toppings count in UI
+            document.getElementById('toppings-count').textContent = activeToppings.length;
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotate the pizza
+            pizza.rotation.y += rotationSpeed;
+            
+            // Also rotate all toppings with the pizza
+            for (let topping of toppings) {
+                if (topping.rotation) {
+                    topping.rotation.y += rotationSpeed;
+                }
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / 2 / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth / 2, window.innerHeight);
+        }
+        
+        function updateTimeSinceRaise() {
+            const countdownElement = document.getElementById('countdown');
+            const currentTime = countdownElement.textContent;
+            
+            let [days, hours, minutes] = currentTime.split(':').map(Number);
+            
+            minutes++;
+            if (minutes >= 60) {
+                minutes = 0;
+                hours++;
+                if (hours >= 24) {
+                    hours = 0;
+                    days++;
+                }
+            }
+            
+            countdownElement.textContent = `${days.toString().padStart(3, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        }
+        
+        function updateMoraleDisplay() {
+            const moraleStatus = document.getElementById('morale-status');
+            const moraleEffectiveness = document.getElementById('morale-effectiveness');
+            const satisfactionLevel = document.getElementById('satisfaction-level');
+            const progressFill = document.getElementById('pizza-progress');
+            const hexContainer = document.getElementById('morale-hexes');
+            const managerScoreElement = document.getElementById('manager-score');
+            
+            // Update morale status text
+            const moraleTexts = ['LOW', 'MODERATE', 'ADEQUATE', 'TEMPORARY'];
+            moraleStatus.textContent = moraleTexts[moraleLevel];
+            
+            // Update effectiveness percentage (10-50%)
+            const effectiveness = 10 + (moraleLevel * 10);
+            moraleEffectiveness.textContent = effectiveness.toFixed(1);
+            
+            // Update satisfaction level
+            const satisfactionTexts = ['LOW', 'MINIMAL', 'TEMPORARY', 'FLEETING'];
+            satisfactionLevel.textContent = satisfactionTexts[moraleLevel];
+            
+            // Update progress bar (20-80%)
+            const progressWidth = 20 + (moraleLevel * 15);
+            progressFill.style.width = `${progressWidth}%`;
+            
+            // Update hex indicators
+            let hexHTML = '';
+            for (let i = 0; i < 5; i++) {
+                if (i <= moraleLevel + 1) {
+                    hexHTML += '<div class="hex hex-active"></div>';
+                } else {
+                    hexHTML += '<div class="hex hex-inactive"></div>';
+                }
+            }
+            hexContainer.innerHTML = hexHTML;
+            
+            // Update manager score
+            managerScoreElement.textContent = managerScore;
+            
+            // Update cost savings
+            const baseSaving = 4250;
+            const costSaving = baseSaving + (managerScore * 25);
+            document.getElementById('cost-saving').textContent = costSaving.toLocaleString();
+        }
+        
+        function increaseMorale() {
+            if (moraleLevel < 3) {
+                moraleLevel++;
+                managerScore += 50;
+                updateMoraleDisplay();
+                return true;
+            }
+            return false;
+        }
+        
+        function addTopping() {
+            // Find a topping that's not already active
+            const availableToppings = toppingTypes.filter(t => !activeToppings.includes(t));
+            
+            if (availableToppings.length > 0) {
+                // Add a random new topping
+                const newTopping = availableToppings[Math.floor(Math.random() * availableToppings.length)];
+                activeToppings.push(newTopping);
+                updateToppings();
+                managerScore += 25;
+                updateMoraleDisplay();
+                return newTopping;
+            }
+            return null;
+        }
+        
+        // Setup command input functionality
+        function setupCommandInput() {
+            const inputElement = document.querySelector('.command-input');
+            const outputElement = document.getElementById('terminal-output');
+            
+            // Command responses
+            const commands = {
+                'help': 'Available commands: help, status, requestRaise, morePizza, ping, motivation, startProject, login, budget, abort, version, pizzaParty, addTopping, rotatePizza, increaseBudget',
+                'status': 'All systems operational. Morale at critical levels. Pizza reserves at 65%.',
+                'requestraise': 'ERROR: Raise request denied. Have you considered the value of free pizza instead?',
+                'morepizza': 'Ordering more pizza. ETA: 30 minutes. Note: This will be deducted from your team budget.',
+                'ping': 'Pinging developers... Response: "We need actual compensation, not food."',
+                'motivation': 'Generating motivational quote: "In Pizza We Trust, In Raises We Bust."',
+                'startproject': 'New project initiated. Timeline: Unrealistic. Resources: Insufficient. Pizza: Abundant.',
+                'login': 'Welcome, Middle Manager #4281. Pizza party authorization granted.',
+                'budget': 'Team Budget: $0 for raises, $5000 for pizza parties and team building exercises.',
+                'abort': 'Cannot abort pizza party protocol. It is hardcoded into company culture.',
+                'version': 'IT Pizza Tracker v2.0.0 - "Management Morale Enhancement" - Build 2025.04',
+                'deliverpizza': 'Pizza delivery initiated. Remember: A fed developer is almost as good as a well-paid one!'
+            };
+            
+            // Default error response
+            const defaultResponse = 'Command not recognized. Type "help" for available commands.';
+            
+            // Handle Enter key press
+            inputElement.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    const command = this.value.toLowerCase().trim();
+                    
+                    // Display command in terminal output
+                    const commandLine = document.createElement('div');
+                    commandLine.textContent = `IT> ${this.value}`;
+                    commandLine.style.color = '#FF6347';
+                    outputElement.appendChild(commandLine);
+                    
+                    // Process command and display response
+                    const response = document.createElement('div');
+                    
+                    // Game commands
+                    if (command === 'pizzaparty') {
+                        const success = increaseMorale();
+                        if (success) {
+                            response.textContent = 'MORALE BOOST INITIATED! Pizza party scheduled. Developers temporarily distracted from compensation issues. +50 MANAGER POINTS';
+                        } else {
+                            response.textContent = 'WARNING: Maximum pizza parties reached. Developers becoming immune to pizza-based manipulation. Try "addTopping" instead.';
+                        }
+                    } else if (command === 'addtopping') {
+                        const newTopping = addTopping();
+                        if (newTopping) {
+                            const toppingNames = {
+                                'pepperoni': 'Pepperoni',
+                                'mushroom': 'Mushrooms',
+                                'olive': 'Olives',
+                                'pineapple': 'Pineapple',
+                                'bell_pepper': 'Bell Peppers'
+                            };
+                            response.textContent = `${toppingNames[newTopping]} added to pizza! Developers momentarily distracted by topping debate. +25 MANAGER POINTS`;
+                        } else {
+                            response.textContent = 'ERROR: Maximum toppings reached. Pizza optimization complete.';
+                        }
+                    } else if (command === 'increasebudget') {
+                        managerScore += 100;
+                        updateMoraleDisplay();
+                        response.textContent = 'Budget for pizza increased! Salary budget decreased proportionally. +100 MANAGER POINTS';
+                    } else if (command === 'rotatepizza') {
+                        rotationSpeed = rotationSpeed < 0.02 ? rotationSpeed * 1.5 : 0.007;
+                        response.textContent = `Pizza rotation ${rotationSpeed > 0.01 ? 'accelerated' : 'normalized'}. Developers mesmerized by spinning pizza. +10 MANAGER POINTS`;
+                        managerScore += 10;
+                        updateMoraleDisplay();
+                    }
+                    // Special case for pizza manipulation
+                    else if (command === 'rotate faster') {
+                        rotationSpeed *= 2;
+                        response.textContent = 'Pizza rotation speed increased. This does not increase productivity.';
+                    } else if (command === 'rotate slower') {
+                        rotationSpeed /= 2;
+                        response.textContent = 'Pizza rotation speed decreased. Just like your motivation.';
+                    } else if (command === 'give raises') {
+                        document.body.classList.add('alarm');
+                        setTimeout(() => {
+                            const warningDiv = document.createElement('div');
+                            warningDiv.textContent = 'CRITICAL ERROR: RAISES DO NOT COMPUTE';
+                            warningDiv.style.color = 'red';
+                            warningDiv.style.fontWeight = 'bold';
+                            outputElement.appendChild(warningDiv);
+                            
+                            // Add explosion effect
+                            const container = document.querySelector('#container');
+                            container.innerHTML = '';
+                            container.style.backgroundColor = 'red';
+                            
+                            setTimeout(() => {
+                                container.style.backgroundColor = 'white';
+                                setTimeout(() => {
+                                    container.style.backgroundColor = 'black';
+                                    container.innerHTML = '<div style="color: white; text-align: center; margin-top: 40vh; font-size: 24px;">SYSTEM REBOOTING... PIZZA PARTY SCHEDULED INSTEAD</div>';
+                                    
+                                    // Reload the page after 3 seconds
+                                    setTimeout(() => {
+                                        location.reload();
+                                    }, 3000);
+                                }, 200);
+                            }, 200);
+                        }, 2000);
+                        response.textContent = 'WARNING: Dangerous command detected. This will crash the corporate finance system.';
+                    } else if (command === 'quit') {
+                        response.textContent = 'You cannot quit. You are conditioned to accept pizza as payment.';
+                    } else {
+                        response.textContent = commands[command] || defaultResponse;
+                    }
+                    
+                    outputElement.appendChild(response);
+                    
+                    // Scroll to bottom of output
+                    outputElement.scrollTop = outputElement.scrollHeight;
+                    
+                    // Clear input
+                    this.value = '';
+                }
+            });
+        }
+        
+        // Make input field active when clicked
+        document.querySelector('.command-input').addEventListener('click', function() {
+            this.focus();
+        });
+        
+        // Initialize everything
+        window.onload = init;
+    </script>
+</body>
+</html>
