@@ -168,6 +168,7 @@
             padding: 10px;
             background-color: rgba(0, 0, 0, 0.8);
             border-top: 1px solid #333;
+            font-size: 18px;
         }
         
         .command-input {
@@ -175,7 +176,7 @@
             border: none;
             color: #FF6347;
             font-family: monospace;
-            font-size: 16px;
+            font-size: 18px;
             width: 90%;
             outline: none;
         }
@@ -184,8 +185,108 @@
             color: #32CD32; /* Lime green */
             font-family: monospace;
             margin-bottom: 10px;
-            max-height: 100px;
+            max-height: 150px;
             overflow-y: auto;
+            font-size: 16px;
+        }
+        
+        /* Game instructions overlay */
+        #instructions-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #32CD32;
+            font-family: monospace;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        #instructions-content {
+            max-width: 800px;
+            text-align: center;
+        }
+        
+        #instructions-content h2 {
+            color: #FF6347;
+            margin-bottom: 20px;
+        }
+        
+        #instructions-content p {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        #instructions-content ul {
+            text-align: left;
+            margin: 20px auto;
+            max-width: 600px;
+        }
+        
+        #instructions-content li {
+            margin-bottom: 10px;
+        }
+        
+        #start-game-btn {
+            background-color: #FF6347;
+            color: black;
+            border: none;
+            padding: 10px 20px;
+            font-family: monospace;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        /* Win/lose overlay */
+        #game-result-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #32CD32;
+            font-family: monospace;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        /* Notification popup */
+        .notification {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            border: 1px solid #FF6347;
+            color: #FF6347;
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 1500;
+            font-family: monospace;
+            text-align: center;
+            min-width: 300px;
+            animation: fadeInOut 4s forwards;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            10% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
         }
         
         /* Scan line effect */
@@ -240,6 +341,35 @@
     <!-- Scan line effects -->
     <div class="scanlines"></div>
     <div class="crt-glow"></div>
+    
+    <!-- Game instructions overlay -->
+    <div id="instructions-overlay">
+        <div id="instructions-content">
+            <h2>MANAGEMENT MORALE ENHANCEMENT SIMULATOR</h2>
+            <p>Welcome, Middle Manager #4281. This tool will help you maximize IT department morale through strategic pizza deployment instead of actual compensation.</p>
+            <p>Your objective: Reach 500 MANAGER POINTS to earn your promotion while maintaining morale above CRITICAL levels.</p>
+            
+            <h3>COMMANDS:</h3>
+            <ul>
+                <li><strong>pizzaParty</strong> - Schedule a pizza party to boost morale (+50 points)</li>
+                <li><strong>addTopping</strong> - Add a new topping to distract developers (+25 points)</li>
+                <li><strong>rotatePizza</strong> - Change pizza rotation speed to mesmerize staff (+10 points)</li>
+                <li><strong>increaseBudget</strong> - Allocate more budget to pizza, less to salaries (+100 points)</li>
+                <li><strong>help</strong> - View all available commands</li>
+            </ul>
+            
+            <p>WARNING: Random events like deadlines, bugs, and competitor job offers will occur. React quickly to maintain morale!</p>
+            <p>REMEMBER: Pizza is NOT a substitute for competitive compensation, but don't tell the developers that.</p>
+            
+            <button id="start-game-btn">START MANAGEMENT SIMULATION</button>
+        </div>
+    </div>
+    
+    <!-- Win/lose overlay -->
+    <div id="game-result-overlay">
+        <div id="game-result-content"></div>
+        <button id="restart-game-btn">RESTART SIMULATION</button>
+    </div>
     
     <div id="header">
         <div class="logo">
@@ -362,6 +492,16 @@
         let managerScore = 0;
         let toppingTypes = ['pepperoni', 'mushroom', 'olive', 'pineapple', 'bell_pepper'];
         let activeToppings = ['pepperoni']; // Start with just pepperoni
+        let gameActive = false;
+        let obstacleTimer;
+        let gameEvents = [
+            { type: 'deadline', message: 'URGENT: Project deadline moved up by 2 weeks!' },
+            { type: 'bug', message: 'CRITICAL BUG: Production system down!' },
+            { type: 'competitor', message: 'ALERT: Competitor offering 30% higher salaries!' },
+            { type: 'meeting', message: 'MANDATORY: 3-hour meeting about TPS reports scheduled!' },
+            { type: 'overtime', message: 'NOTICE: Weekend work required to meet deadlines!' },
+            { type: 'review', message: 'PERFORMANCE REVIEW: IT department efficiency questioned!' }
+        ];
 
         function init() {
             // Create scene
@@ -447,6 +587,12 @@
             
             // Update UI elements
             updateMoraleDisplay();
+            
+            // Setup game start button
+            document.getElementById('start-game-btn').addEventListener('click', startGame);
+            
+            // Setup restart button
+            document.getElementById('restart-game-btn').addEventListener('click', restartGame);
         }
         
         function updateToppings() {
@@ -459,7 +605,7 @@
             // Add pepperoni (red disks)
             if (activeToppings.includes('pepperoni')) {
                 for (let i = 0; i < 20; i++) {
-                    const toppingGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.05, 8);
+                    const toppingGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.05, 8);
                     const toppingMaterial = new THREE.MeshBasicMaterial({ color: 0xFF0000 });
                     const topping = new THREE.Mesh(toppingGeometry, toppingMaterial);
                     
@@ -469,6 +615,15 @@
                     topping.position.x = Math.cos(angle) * distance;
                     topping.position.z = Math.sin(angle) * distance;
                     topping.position.y = 0.25;
+                    
+                    // Store original position for animation
+                    topping.userData = {
+                        originalX: topping.position.x,
+                        originalZ: topping.position.z,
+                        angle: angle,
+                        distance: distance,
+                        bobSpeed: 0.5 + Math.random() * 0.5
+                    };
                     
                     scene.add(topping);
                     toppings.push(topping);
@@ -582,6 +737,22 @@
             
             // Also rotate all toppings with the pizza
             for (let topping of toppings) {
+                if (topping.userData) {
+                    // For pepperoni, add a slight bobbing motion
+                    if (activeToppings.includes('pepperoni') && topping.geometry.type === "CylinderGeometry" && topping.geometry.parameters.radiusTop === 0.15) {
+                        const time = Date.now() * 0.001;
+                        const bobHeight = Math.sin(time * topping.userData.bobSpeed) * 0.03;
+                        
+                        // Rotate with pizza
+                        const newAngle = topping.userData.angle + pizza.rotation.y;
+                        topping.position.x = Math.cos(newAngle) * topping.userData.distance;
+                        topping.position.z = Math.sin(newAngle) * topping.userData.distance;
+                        
+                        // Add bobbing
+                        topping.position.y = 0.25 + bobHeight;
+                    }
+                }
+                
                 if (topping.rotation) {
                     topping.rotation.y += rotationSpeed;
                 }
@@ -657,6 +828,16 @@
             const baseSaving = 4250;
             const costSaving = baseSaving + (managerScore * 25);
             document.getElementById('cost-saving').textContent = costSaving.toLocaleString();
+            
+            // Check for win condition
+            if (gameActive && managerScore >= 500) {
+                winGame();
+            }
+            
+            // Check for lose condition
+            if (gameActive && moraleLevel < 0) {
+                loseGame("CRITICAL MORALE FAILURE");
+            }
         }
         
         function increaseMorale() {
@@ -667,6 +848,12 @@
                 return true;
             }
             return false;
+        }
+        
+        function decreaseMorale(amount = 1) {
+            moraleLevel -= amount;
+            updateMoraleDisplay();
+            showNotification(`MORALE DECREASED TO ${moraleLevel < 0 ? 'CRITICAL' : ['LOW', 'MODERATE', 'ADEQUATE', 'TEMPORARY'][Math.max(0, moraleLevel)]}`);
         }
         
         function addTopping() {
@@ -683,6 +870,140 @@
                 return newTopping;
             }
             return null;
+        }
+        
+        function startGame() {
+            document.getElementById('instructions-overlay').style.display = 'none';
+            gameActive = true;
+            managerScore = 0;
+            moraleLevel = 1; // Start at MODERATE
+            updateMoraleDisplay();
+            
+            // Start random obstacles
+            startObstacles();
+            
+            // Show welcome message
+            showNotification("MANAGEMENT SIMULATION STARTED - DEPLOY PIZZA STRATEGICALLY");
+        }
+        
+        function restartGame() {
+            document.getElementById('game-result-overlay').style.display = 'none';
+            
+            // Reset game state
+            managerScore = 0;
+            moraleLevel = 1;
+            activeToppings = ['pepperoni'];
+            updateToppings();
+            updateMoraleDisplay();
+            
+            // Restart obstacles
+            startObstacles();
+            
+            gameActive = true;
+        }
+        
+        function startObstacles() {
+            // Clear any existing timer
+            if (obstacleTimer) {
+                clearInterval(obstacleTimer);
+            }
+            
+            // Trigger random obstacles every 20-40 seconds
+            obstacleTimer = setInterval(() => {
+                if (gameActive) {
+                    triggerRandomObstacle();
+                }
+            }, 20000 + Math.random() * 20000);
+        }
+        
+        function triggerRandomObstacle() {
+            const event = gameEvents[Math.floor(Math.random() * gameEvents.length)];
+            showNotification(event.message);
+            
+            const outputElement = document.getElementById('terminal-output');
+            const eventLine = document.createElement('div');
+            eventLine.textContent = `SYSTEM> ${event.message}`;
+            eventLine.style.color = '#FF0000';
+            outputElement.appendChild(eventLine);
+            
+            // Scroll to bottom of output
+            outputElement.scrollTop = outputElement.scrollHeight;
+            
+            // Apply effect based on event type
+            switch(event.type) {
+                case 'deadline':
+                    decreaseMorale();
+                    managerScore -= 20;
+                    break;
+                case 'bug':
+                    decreaseMorale();
+                    managerScore -= 30;
+                    break;
+                case 'competitor':
+                    decreaseMorale(2);
+                    break;
+                case 'meeting':
+                    managerScore -= 25;
+                    break;
+                case 'overtime':
+                    decreaseMorale();
+                    break;
+                case 'review':
+                    managerScore -= 40;
+                    break;
+            }
+            
+            updateMoraleDisplay();
+        }
+        
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Remove notification after animation completes
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 4000);
+        }
+        
+        function winGame() {
+            gameActive = false;
+            clearInterval(obstacleTimer);
+            
+            const resultOverlay = document.getElementById('game-result-overlay');
+            const resultContent = document.getElementById('game-result-content');
+            
+            resultContent.innerHTML = `
+                <h2 style="color: #32CD32;">CONGRATULATIONS</h2>
+                <p>You have successfully maintained IT department morale through strategic pizza deployment!</p>
+                <p>Final Score: ${managerScore} MANAGER POINTS</p>
+                <p>Cost Savings: $${(4250 + managerScore * 25).toLocaleString()}</p>
+                <p>Your promotion to Senior Pizza Distribution Manager has been approved.</p>
+                <p style="color: #FF6347; font-size: 12px;">Note: 3 developers quit during your management period.</p>
+            `;
+            
+            resultOverlay.style.display = 'flex';
+        }
+        
+        function loseGame(reason) {
+            gameActive = false;
+            clearInterval(obstacleTimer);
+            
+            const resultOverlay = document.getElementById('game-result-overlay');
+            const resultContent = document.getElementById('game-result-content');
+            
+            resultContent.innerHTML = `
+                <h2 style="color: #FF6347;">MANAGEMENT FAILURE</h2>
+                <p>Your pizza-based morale enhancement strategy has failed!</p>
+                <p>Reason: ${reason}</p>
+                <p>Final Score: ${managerScore} MANAGER POINTS</p>
+                <p>The entire IT department has resigned and joined your competitor.</p>
+                <p style="color: #FF6347;">You have been reassigned to the mailroom.</p>
+            `;
+            
+            resultOverlay.style.display = 'flex';
         }
         
         // Setup command input functionality
@@ -725,35 +1046,51 @@
                     
                     // Game commands
                     if (command === 'pizzaparty') {
-                        const success = increaseMorale();
-                        if (success) {
-                            response.textContent = 'MORALE BOOST INITIATED! Pizza party scheduled. Developers temporarily distracted from compensation issues. +50 MANAGER POINTS';
+                        if (!gameActive) {
+                            response.textContent = 'Please start the management simulation first.';
                         } else {
-                            response.textContent = 'WARNING: Maximum pizza parties reached. Developers becoming immune to pizza-based manipulation. Try "addTopping" instead.';
+                            const success = increaseMorale();
+                            if (success) {
+                                response.textContent = 'MORALE BOOST INITIATED! Pizza party scheduled. Developers temporarily distracted from compensation issues. +50 MANAGER POINTS';
+                            } else {
+                                response.textContent = 'WARNING: Maximum pizza parties reached. Developers becoming immune to pizza-based manipulation. Try "addTopping" instead.';
+                            }
                         }
                     } else if (command === 'addtopping') {
-                        const newTopping = addTopping();
-                        if (newTopping) {
-                            const toppingNames = {
-                                'pepperoni': 'Pepperoni',
-                                'mushroom': 'Mushrooms',
-                                'olive': 'Olives',
-                                'pineapple': 'Pineapple',
-                                'bell_pepper': 'Bell Peppers'
-                            };
-                            response.textContent = `${toppingNames[newTopping]} added to pizza! Developers momentarily distracted by topping debate. +25 MANAGER POINTS`;
+                        if (!gameActive) {
+                            response.textContent = 'Please start the management simulation first.';
                         } else {
-                            response.textContent = 'ERROR: Maximum toppings reached. Pizza optimization complete.';
+                            const newTopping = addTopping();
+                            if (newTopping) {
+                                const toppingNames = {
+                                    'pepperoni': 'Pepperoni',
+                                    'mushroom': 'Mushrooms',
+                                    'olive': 'Olives',
+                                    'pineapple': 'Pineapple',
+                                    'bell_pepper': 'Bell Peppers'
+                                };
+                                response.textContent = `${toppingNames[newTopping]} added to pizza! Developers momentarily distracted by topping debate. +25 MANAGER POINTS`;
+                            } else {
+                                response.textContent = 'ERROR: Maximum toppings reached. Pizza optimization complete.';
+                            }
                         }
                     } else if (command === 'increasebudget') {
-                        managerScore += 100;
-                        updateMoraleDisplay();
-                        response.textContent = 'Budget for pizza increased! Salary budget decreased proportionally. +100 MANAGER POINTS';
+                        if (!gameActive) {
+                            response.textContent = 'Please start the management simulation first.';
+                        } else {
+                            managerScore += 100;
+                            updateMoraleDisplay();
+                            response.textContent = 'Budget for pizza increased! Salary budget decreased proportionally. +100 MANAGER POINTS';
+                        }
                     } else if (command === 'rotatepizza') {
-                        rotationSpeed = rotationSpeed < 0.02 ? rotationSpeed * 1.5 : 0.007;
-                        response.textContent = `Pizza rotation ${rotationSpeed > 0.01 ? 'accelerated' : 'normalized'}. Developers mesmerized by spinning pizza. +10 MANAGER POINTS`;
-                        managerScore += 10;
-                        updateMoraleDisplay();
+                        if (!gameActive) {
+                            response.textContent = 'Please start the management simulation first.';
+                        } else {
+                            rotationSpeed = rotationSpeed < 0.02 ? rotationSpeed * 1.5 : 0.007;
+                            response.textContent = `Pizza rotation ${rotationSpeed > 0.01 ? 'accelerated' : 'normalized'}. Developers mesmerized by spinning pizza. +10 MANAGER POINTS`;
+                            managerScore += 10;
+                            updateMoraleDisplay();
+                        }
                     }
                     // Special case for pizza manipulation
                     else if (command === 'rotate faster') {
