@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NERV Interface</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #FF4500;
+            font-family: monospace;
+            overflow: hidden;
+        }
+        
+        #container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #header {
+            position: absolute;
+            top: -10px;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-bottom: 1px solid #333;
+            z-index: 100;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo-triangle {
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 30px solid #FF4500;
+            margin-right: 10px;
+        }
+        
+        .logo-text {
+            color: #FF4500;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .status {
+            color: #00CED1;
+        }
+        
+        .timer {
+            color: #00CED1;
+        }
+        
+        #sphere-container {
+            position: relative;
+            height: 100%;
+            border-right: 1px solid #333;
+        }
+        
+        #sphere-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        #data-container {
+            padding: 20px;
+            margin-top: 20px;
+            height: 100%;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #FF4500;
+            padding-bottom: 10px;
+        }
+        
+        .section-title {
+            color: #FF4500;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .data-label {
+            text-align: right;
+        }
+        
+        .data-value {
+            color: #00CED1;
+            margin-left: 20px;
+        }
+        
+        .warning {
+            color: #FF4500;
+            margin: 15px 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 15px;
+            background-color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #00CED1;
+            width: 80%;
+        }
+        
+        .hex-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+        
+        .hex {
+            width: 30px;
+            height: 30px;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        }
+        
+        .hex-active {
+            background-color: #00CED1;
+        }
+        
+        .hex-inactive {
+            background-color: #444;
+        }
+        
+        #terminal {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-top: 1px solid #333;
+        }
+        
+        .command-input {
+            background-color: transparent;
+            border: none;
+            color: #FF4500;
+            font-family: monospace;
+            font-size: 16px;
+            width: 90%;
+            outline: none;
+        }
+        
+        #terminal-output {
+            color: #00CED1;
+            font-family: monospace;
+            margin-bottom: 10px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        
+        /* Scan line effect */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                rgba(255, 255, 255, 0) 50%,
+                rgba(0, 0, 0, 0.5) 50%
+            );
+            background-size: 100% 6px;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0.4;
+            animation: flicker 0.15s infinite;
+        }
+        
+        @keyframes flicker {
+            0% { opacity: 0.4; }
+            50% { opacity: 0.3; }
+            100% { opacity: 0.4; }
+        }
+        
+        /* CRT glow effect */
+        .crt-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 150px rgba(0, 205, 226, 0.4);
+            pointer-events: none;
+            z-index: 999;
+        }
+        
+        .alarm {
+            animation: alarm 0.5s infinite;
+        }
+        
+        @keyframes alarm {
+            0% { background-color: #000; }
+            50% { background-color: #500; }
+            100% { background-color: #000; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Scan line effects -->
+    <div class="scanlines"></div>
+    <div class="crt-glow"></div>
+    
+    <div id="header">
+        <div class="logo">
+            <div class="logo-triangle"></div>
+            <div class="logo-text">NERV</div>
+        </div>
+        <div class="status">SYSTEM STATUS: <span>NORMAL</span></div>
+        <div class="timer">T-MINUS <span id="countdown">24:12:10</span></div>
+    </div>
+
+    <div id="container">
+        <div id="sphere-container">
+            <div id="sphere-canvas"></div>
+        </div>
+        <div id="data-container">
+            <div class="section">
+                <div class="section-title">SPHERE ANALYSIS</div>
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">RADIUS:</div>
+                    <div class="data-value">2.35m</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">DENSITY:</div>
+                    <div class="data-value">5.67g/cm³</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">TEMP:</div>
+                    <div class="data-value">26.8°C</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">MASS:</div>
+                    <div class="data-value">189.4kg</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">PATTERN:</div>
+                    <div class="data-value">BLUE</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">ROTATION:</div>
+                    <div class="data-value">8.7°/s</div>
+                </div>
+                <div class="warning">WARNING: UNUSUAL ENERGY SIGNATURE DETECTED</div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">CONFIGURATION</div>
+                <div class="hex-container">
+                    <div class="hex hex-active"></div>
+                    <div class="hex hex-active"></div>
+                    <div class="hex hex-inactive"></div>
+                    <div class="hex hex-inactive"></div>
+                    <div class="hex hex-active"></div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">SYNC:</div>
+                    <div class="data-value">84.3%</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">HARMONIC:</div>
+                    <div class="data-value">NORMAL</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">WAVE:</div>
+                    <div class="data-value">PATTERN-A</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">MODE:</div>
+                    <div class="data-value">OBSERVATION</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">MAGI ANALYSIS</div>
+                <div class="data-row">
+                    <div class="data-label">MELCHIOR:</div>
+                    <div class="data-value">CONFIRMED</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">BALTHASAR:</div>
+                    <div class="data-value">CONFIRMED</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">CASPER:</div>
+                    <div class="data-value" id="casper-status">VERIFYING...</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">TERMINAL</div>
+                <div id="terminal-output">
+                    <!-- Terminal output will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="terminal">
+        <span>NERV&gt;</span>
+        <input type="text" class="command-input" value="INITIATE" spellcheck="false">
+    </div>
+
+    <script>
+        // Initialize Three.js
+        let scene, camera, renderer;
+        let sphere, wireframe;
+        let rotationSpeed = 0.007;
+
+        function init() {
+            // Create scene
+            scene = new THREE.Scene();
+            
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / 2 / window.innerHeight, 0.1, 1000);
+            camera.position.z = 5;
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth / 2, window.innerHeight);
+            renderer.setClearColor(0x000000, 0);
+            document.getElementById('sphere-canvas').appendChild(renderer.domElement);
+            
+            // Create sphere geometry
+            const geometry = new THREE.SphereGeometry(2, 32, 32);
+            
+            // Create wireframe material
+            const material = new THREE.MeshBasicMaterial({ color: 0x00CED1, wireframe: true });
+            
+            // Create sphere with wireframe
+            sphere = new THREE.Mesh(geometry, material);
+            scene.add(sphere);
+            
+            // Add vertical axis line
+            const lineMaterial = new THREE.LineBasicMaterial({ color: 0xFF4500 });
+            const points = [];
+            points.push(new THREE.Vector3(0, -3, 0));
+            points.push(new THREE.Vector3(0, 3, 0));
+            const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+            const line = new THREE.Line(lineGeometry, lineMaterial);
+            scene.add(line);
+            
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+            
+            // Start animation
+            animate();
+            
+            // Update countdown
+            setInterval(updateCountdown, 1000);
+            
+            // Simulate Casper verification
+            setTimeout(() => {
+                document.getElementById('casper-status').textContent = 'CONFIRMED';
+            }, 5000);
+            
+            // Add random CRT flicker effect
+            setInterval(() => {
+                if (Math.random() > 0.97) {
+                    document.querySelector('.scanlines').style.opacity = '0.7';
+                    setTimeout(() => {
+                        document.querySelector('.scanlines').style.opacity = '0.4';
+                    }, 100);
+                }
+            }, 500);
+            
+            // Add command input handling
+            setupCommandInput();
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotate the sphere
+            sphere.rotation.y += rotationSpeed;
+            sphere.rotation.x += rotationSpeed * 0.5;
+            
+            renderer.render(scene, camera);
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / 2 / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth / 2, window.innerHeight);
+        }
+        
+        function updateCountdown() {
+            const countdownElement = document.getElementById('countdown');
+            const currentTime = countdownElement.textContent;
+            
+            let [hours, minutes, seconds] = currentTime.split(':').map(Number);
+            
+            seconds--;
+            if (seconds < 0) {
+                seconds = 59;
+                minutes--;
+                if (minutes < 0) {
+                    minutes = 59;
+                    hours--;
+                    if (hours < 0) {
+                        hours = 0;
+                        minutes = 0;
+                        seconds = 0;
+                    }
+                }
+            }
+            
+            countdownElement.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Setup command input functionality
+        function setupCommandInput() {
+            const inputElement = document.querySelector('.command-input');
+            const outputElement = document.getElementById('terminal-output');
+            
+            // Command responses
+            const commands = {
+                'help': 'Available commands: help, status, initiateThirdImpact, activate, ping, decrypt, launch, login, evangelion, abort, version',
+                'status': 'All systems operational. AT Field stable. Pattern: Blue.',
+                'initiatethirdimpact': 'ERROR: Third Impact sequence requires authorization from SEELE committee. Access denied.',
+                'activate': 'Activating NERV defense systems. Eva Units standing by.',
+                'ping': 'Connection established. Latency: 0.015ms. MAGI systems responding.',
+                'decrypt': 'Decrypting Dead Sea Scrolls data... [ACCESS DENIED] - Clearance level insufficient.',
+                'launch': 'Eva launch sequence initiated. Catapult systems engaged. Pilot synchronization at nominal levels.',
+                'login': 'Welcome, Commander Ikari.',
+                'evangelion': 'Eva Units: Unit-00 (Standby), Unit-01 (Active), Unit-02 (Standby), Unit-03 (Damaged).',
+                'abort': 'Mission aborted. All systems returning to standby mode.',
+                'version': 'NERV Terminal v3.14 - "Project E" - Build 2025.01',
+                'initiate': 'Initiating primary systems... Connecting to MAGI... Connection established.'
+            };
+            
+            // Default error response
+            const defaultResponse = 'Command not recognized. Type "help" for available commands.';
+            
+            // Handle Enter key press
+            inputElement.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    const command = this.value.toLowerCase().trim();
+                    
+                    // Display command in terminal output
+                    const commandLine = document.createElement('div');
+                    commandLine.textContent = `NERV> ${this.value}`;
+                    commandLine.style.color = '#FF4500';
+                    outputElement.appendChild(commandLine);
+                    
+                    // Process command and display response
+                    const response = document.createElement('div');
+                    
+                    // Special case for sphere manipulation
+                    if (command === 'rotate faster') {
+                        rotationSpeed *= 2;
+                        response.textContent = 'Sphere rotation speed increased.';
+                    } else if (command === 'rotate slower') {
+                        rotationSpeed /= 2;
+                        response.textContent = 'Sphere rotation speed decreased.';
+                    } else if (command === 'self destruct') {
+                        document.body.classList.add('alarm');
+                        setTimeout(() => {
+                            const warningDiv = document.createElement('div');
+                            warningDiv.textContent = 'SELF DESTRUCT SEQUENCE INITIATED';
+                            warningDiv.style.color = 'red';
+                            warningDiv.style.fontWeight = 'bold';
+                            outputElement.appendChild(warningDiv);
+                            
+                            // Add explosion effect
+                            const container = document.querySelector('#container');
+                            container.innerHTML = '';
+                            container.style.backgroundColor = 'red';
+                            
+                            setTimeout(() => {
+                                container.style.backgroundColor = 'white';
+                                setTimeout(() => {
+                                    container.style.backgroundColor = 'black';
+                                    container.innerHTML = '<div style="color: white; text-align: center; margin-top: 40vh; font-size: 24px;">TERMINAL OFFLINE</div>';
+                                }, 200);
+                            }, 200);
+                        }, 2000);
+                        response.textContent = 'WARNING: Self-destruct sequence requires confirmation. Type "confirm" to proceed or "abort" to cancel.';
+                    } else {
+                        response.textContent = commands[command] || defaultResponse;
+                    }
+                    
+                    outputElement.appendChild(response);
+                    
+                    // Scroll to bottom of output
+                    outputElement.scrollTop = outputElement.scrollHeight;
+                    
+                    // Clear input
+                    this.value = '';
+                }
+            });
+        }
+        
+        // Make input field active when clicked
+        document.querySelector('.command-input').addEventListener('click', function() {
+            this.focus();
+        });
+        
+        // Initialize everything
+        window.onload = init;
+    </script>
+</body>
+</html>

@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NERV Interface</title>
+    <title>Pizza Clicker 3000</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body {
             margin: 0;
             padding: 0;
             background-color: #000;
-            color: #FF4500;
+            color: #FF6347; /* Tomato red for pizza sauce */
             font-family: monospace;
             overflow: hidden;
         }
@@ -24,7 +24,7 @@
         
         #header {
             position: absolute;
-            top: -10px;
+            top: 0;
             left: 0;
             width: 100%;
             padding: 10px;
@@ -40,44 +40,36 @@
             display: flex;
             align-items: center;
         }
-        
-        .logo-triangle {
-            width: 0;
-            height: 0;
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
-            border-bottom: 30px solid #FF4500;
-            margin-right: 10px;
-        }
+    
         
         .logo-text {
-            color: #FF4500;
+            color: #FFA500; /* Pizza crust color */
             font-size: 24px;
             font-weight: bold;
         }
         
         .status {
-            color: #00CED1;
+            color: #32CD32; /* Lime green */
         }
         
         .timer {
-            color: #00CED1;
+            color: #32CD32; /* Lime green */
         }
         
-        #sphere-container {
+        #pizza-container {
             position: relative;
             height: 100%;
             border-right: 1px solid #333;
         }
         
-        #sphere-canvas {
+        #pizza-canvas {
             width: 100%;
             height: 100%;
         }
         
         #data-container {
             padding: 20px;
-            margin-top: 20px;
+            margin-top: 40px;
             height: 100%;
             box-sizing: border-box;
             overflow-y: auto;
@@ -85,12 +77,12 @@
         
         .section {
             margin-bottom: 30px;
-            border-bottom: 1px solid #FF4500;
+            border-bottom: 1px solid #FF6347;
             padding-bottom: 10px;
         }
         
         .section-title {
-            color: #FF4500;
+            color: #FF6347;
             font-size: 18px;
             margin-bottom: 20px;
         }
@@ -106,12 +98,12 @@
         }
         
         .data-value {
-            color: #00CED1;
+            color: #32CD32; /* Lime green */
             margin-left: 20px;
         }
         
         .warning {
-            color: #FF4500;
+            color: #FF6347;
             margin: 15px 0;
         }
         
@@ -124,8 +116,8 @@
         
         .progress-fill {
             height: 100%;
-            background-color: #00CED1;
-            width: 80%;
+            background-color: #32CD32; /* Lime green */
+            width: 20%; /* Lower for comedic effect */
         }
         
         .hex-container {
@@ -141,39 +133,119 @@
         }
         
         .hex-active {
-            background-color: #00CED1;
+            background-color: #32CD32; /* Lime green */
         }
         
         .hex-inactive {
             background-color: #444;
         }
         
-        #terminal {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            padding: 10px;
-            background-color: rgba(0, 0, 0, 0.8);
-            border-top: 1px solid #333;
-        }
-        
-        .command-input {
-            background-color: transparent;
-            border: none;
-            color: #FF4500;
-            font-family: monospace;
-            font-size: 16px;
-            width: 90%;
-            outline: none;
-        }
-        
         #terminal-output {
-            color: #00CED1;
+            color: #32CD32; /* Lime green */
             font-family: monospace;
             margin-bottom: 10px;
-            max-height: 100px;
+            max-height: 150px;
             overflow-y: auto;
+            font-size: 16px;
+        }
+        
+        /* Game instructions overlay */
+        #instructions-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #32CD32;
+            font-family: monospace;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        #instructions-content {
+            max-width: 800px;
+            text-align: center;
+        }
+        
+        #instructions-content h2 {
+            color: #FF6347;
+            margin-bottom: 20px;
+        }
+        
+        #instructions-content p {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        #instructions-content ul {
+            text-align: left;
+            margin: 20px auto;
+            max-width: 600px;
+        }
+        
+        #instructions-content li {
+            margin-bottom: 10px;
+        }
+        
+        #start-game-btn {
+            background-color: #FF6347;
+            color: black;
+            border: none;
+            padding: 10px 20px;
+            font-family: monospace;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        /* Win/lose overlay */
+        #game-result-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #32CD32;
+            font-family: monospace;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        /* Notification popup */
+        .notification {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            border: 1px solid #FF6347;
+            color: #FF6347;
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 1500;
+            font-family: monospace;
+            text-align: center;
+            min-width: 300px;
+            animation: fadeInOut 4s forwards;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            10% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
         }
         
         /* Scan line effect */
@@ -208,7 +280,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            box-shadow: inset 0 0 150px rgba(0, 205, 226, 0.4);
+            box-shadow: inset 0 0 150px rgba(253, 146, 23, 0.4); /* Green glow */
             pointer-events: none;
             z-index: 999;
         }
@@ -222,6 +294,260 @@
             50% { background-color: #500; }
             100% { background-color: #000; }
         }
+        
+        /* Floating text animation for clicker */
+        @keyframes float-up {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-50px); }
+        }
+        
+        /* Command buttons */
+        .command-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .command-button {
+            font-size: 16px;
+            background-color: #333;
+            color: #FF6347;
+            border: 1px solid #FF6347;
+            padding: 5px 10px;
+            font-family: monospace;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 120px;
+            margin-bottom: 10px;
+            position: relative; /* Added for count badge positioning */
+            transition: opacity 0.3s, filter 0.3s;
+        }
+        
+        /* Style for unaffordable items */
+        .command-button.unaffordable {
+            opacity: 0.7;
+        }
+        
+        /* Style for unlocked but unaffordable items */
+        .command-button.unaffordable.unlocked {
+            filter: none;
+        }
+        
+        /* Style for locked (never purchased) items */
+        .command-button.unaffordable.locked {
+            filter: blur(3px);
+        }
+        
+        /* Add back the question mark for locked items */
+        .command-button.unaffordable.locked::before {
+            content: "???";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: #FF6347;
+            z-index: 1;
+            visibility: visible;
+        }
+        
+        /* Hide the content of locked buttons */
+        .command-button.unaffordable.locked > *:not(.item-count):not(.tooltip) {
+            visibility: hidden;
+        }
+        
+        /* Add count badge style */
+        .item-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: #FFD700;
+            color: #000;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .command-button:hover {
+            background-color: #444;
+        }
+        
+        .command-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #222; /* Darker background for disabled buttons */
+            border-color: #444; /* Darker border for disabled buttons */
+        }
+        
+        .cost {
+            font-size: 18px;
+            color: #FFD700;
+        }
+        
+        .production {
+            font-size: 14px;
+            color: #32CD32;
+            margin-top: 3px;
+        }
+        
+        /* Resource display */
+        .resource-display {
+            font-size: 22px;
+            position: absolute;
+            top: 80px;
+            left: 25%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 1px solid #FF6347;
+            padding: 10px;
+            font-family: monospace;
+            color: #FFD700;
+            z-index: 100;
+            text-align: center;
+        }
+        
+        /* Pizza clickable indicator */
+        #pizza-canvas {
+            cursor: pointer;
+            position: relative;
+        }
+        
+
+        /* Add save button style */
+        #save-button {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            background-color: #333;
+            color: #32CD32;
+            border: 1px solid #32CD32;
+            padding: 5px 10px;
+            font-family: monospace;
+            cursor: pointer;
+            z-index: 100;
+        }
+        
+        #save-button:hover {
+            background-color: #444;
+        }
+        
+        #save-button:active {
+            background-color: #222;
+        }
+        
+        /* Save notification */
+        .save-notification {
+            position: fixed;
+            top: 120px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #32CD32;
+            padding: 10px;
+            border: 1px solid #32CD32;
+            font-family: monospace;
+            z-index: 1500;
+            animation: fadeOut 2s forwards;
+        }
+        
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        
+        /* Pizza click animation */
+        @keyframes pizza-click {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .pizza-clicked {
+            animation: pizza-click 0.2s ease-in-out;
+        }
+        
+        /* Tooltip styles */
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.9);
+            color: #32CD32;
+            border: 1px solid #FF6347;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+            z-index: 1000;
+            width: 250px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            text-align: left;
+            left: 100%; /* Position tooltips to the right of the button */
+            top: 0;
+            margin-left: 10px; /* Add some spacing between button and tooltip */
+        }
+        
+        .tooltip-title {
+            color: #FF6347;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .tooltip-cost {
+            color: #FFD700;
+            margin-bottom: 5px;
+        }
+        
+        .tooltip-effect {
+            color: #32CD32;
+            margin-bottom: 5px;
+        }
+        
+        .tooltip-description {
+            color: #FFFFFF;
+            font-size: 12px;
+        }
+        
+        .command-button:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Bill Lumberg pop-up animation */
+        #lumberg-popup {
+            position: fixed;
+            bottom: -200px;
+            right: 50px;
+            width: 200px;
+            height: 200px;
+            background-image: url('./office_space.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            z-index: 2000;
+            transition: bottom 0.3s ease-out;
+            pointer-events: none;
+        }
+        
+        .lumberg-active {
+            animation: lumberg-appear 3s ease-in-out;
+        }
+        
+        @keyframes lumberg-appear {
+            0% { bottom: -200px; }
+            20% { bottom: 50px; }
+            80% { bottom: 50px; }
+            100% { bottom: -200px; }
+        }
+
     </style>
 </head>
 <body>
@@ -229,147 +555,326 @@
     <div class="scanlines"></div>
     <div class="crt-glow"></div>
     
+    <!-- Audio elements for sound effects -->
+    <audio id="pizza-click-sound" preload="auto">
+        <source src="./click.mp3" type="audio/mp3">
+    </audio>
+    <audio id="lumberg-sound" preload="auto">
+        <source src="./hello_lumberg.mp3" type="audio/mp3">
+    </audio>
+    
+    <!-- Game instructions overlay completely removed -->
+    
+    <!-- Win/lose overlay -->
+    <div id="game-result-overlay">
+        <div id="game-result-content"></div>
+        <button id="restart-game-btn">RESTART SIMULATION</button>
+    </div>
+    
+    <!-- Bill Lumberg popup -->
+    <div id="lumberg-popup"></div>
+
     <div id="header">
         <div class="logo">
-            <div class="logo-triangle"></div>
-            <div class="logo-text">NERV</div>
+            <div class="logo-text">🍕 PIZZA CLICKER 3000</div>
         </div>
-        <div class="status">SYSTEM STATUS: <span>NORMAL</span></div>
-        <div class="timer">T-MINUS <span id="countdown">24:12:10</span></div>
     </div>
 
+    <!-- Resource display -->
+    <div class="resource-display">
+        <div>PIZZAS: <span id="pizza-coins">0</span></div>
+        <div>PIZZAS/SEC: <span id="pizza-coins-per-second">0.2</span></div>
+    </div>
+    
+    <!-- Save button -->
+    <button id="save-button">SAVE GAME</button>
+
     <div id="container">
-        <div id="sphere-container">
-            <div id="sphere-canvas"></div>
+        <div id="pizza-container">
+            <div id="pizza-canvas"></div>
         </div>
         <div id="data-container">
             <div class="section">
-                <div class="section-title">SPHERE ANALYSIS</div>
+                <div class="section-title">ITEM STORE</div>
+                <div id="terminal-output">
+                    <!-- Terminal output will appear here -->
+                </div>
+                
+                <!-- Command buttons renamed to store items -->
+                <div class="command-buttons">
+                    <button id="rotatepizza-button" class="command-button">
+                        <span class="item-count" id="rotatepizza-count">0</span>
+                        DISPLAY STAND
+                        <span class="cost">
+                            🍕 <span id="rotatepizza-cost">10</span></span>
+                        <span class="production">+10% PRODUCTION</span>
+                        <div class="tooltip">
+                            <div class="tooltip-title">DISPLAY STAND</div>
+                            <div class="tooltip-cost">Cost: <span id="tooltip-rotatepizza-cost">10</span> Pizzas</div>
+                            <div class="tooltip-effect">Effect: +10% Pizza Production</div>
+                            <div class="tooltip-description">A rotating display stand that mesmerizes developers with spinning pizza. Each purchase increases rotation speed and production.</div>
+                        </div>
+                    </button>
+                    <button id="addtopping-button" class="command-button">
+                        <span class="item-count" id="addtopping-count">0</span>
+                        TOPPING STATION
+                        <span class="cost"><span id="addtopping-cost">100</span> PIZZAS</span>
+                        <span class="production">+50% PRODUCTION</span>
+                        <div class="tooltip">
+                            <div class="tooltip-title">TOPPING STATION</div>
+                            <div class="tooltip-cost">Cost: <span id="tooltip-addtopping-cost">100</span> Pizzas</div>
+                            <div class="tooltip-effect">Effect: +50% Pizza Production</div>
+                            <div class="tooltip-description">Add more pepperoni to your pizzas. Each upgrade increases the amount of pepperoni and boosts production.</div>
+                        </div>
+                    </button>
+                    <button id="pizzaparty-button" class="command-button">
+                        <span class="item-count" id="pizzaparty-count">0</span>
+                        PIZZA OVEN
+                        <span class="cost"><span id="pizzaparty-cost">1100</span> PIZZAS</span>
+                        <span class="production">+100% PRODUCTION</span>
+                        <div class="tooltip">
+                            <div class="tooltip-title">PIZZA OVEN</div>
+                            <div class="tooltip-cost">Cost: <span id="tooltip-pizzaparty-cost">1100</span> Pizzas</div>
+                            <div class="tooltip-effect">Effect: +100% Pizza Production</div>
+                            <div class="tooltip-description">Install a new pizza oven to double your pizza production. Fresh pizza is more effective at suppressing salary discussions.</div>
+                        </div>
+                    </button>
+                    <button id="increasebudget-button" class="command-button">
+                        <span class="item-count" id="increasebudget-count">0</span>
+                        DELIVERY TRUCK
+                        <span class="cost"><span id="increasebudget-cost">12000</span> PIZZAS</span>
+                        <span class="production">+400% PRODUCTION</span>
+                        <div class="tooltip">
+                            <div class="tooltip-title">DELIVERY TRUCK</div>
+                            <div class="tooltip-cost">Cost: <span id="tooltip-increasebudget-cost">12000</span> Pizzas</div>
+                            <div class="tooltip-effect">Effect: +400% Pizza Production</div>
+                            <div class="tooltip-description">Allocate more budget to pizza delivery, less to salaries. Massive boost to pizza production at the expense of employee satisfaction.</div>
+                        </div>
+                    </button>
+                    <!-- New items will be added here -->
+                    <button id="motivational-button" class="command-button">
+                        <span class="item-count" id="motivational-count">0</span>
+                        MOTIVATIONAL POSTER
+                        <span class="cost"><span id="motivational-cost">50000</span> PIZZAS</span>
+                        <span class="production">+1000% PRODUCTION</span>
+                        <div class="tooltip">
+                            <div class="tooltip-title">MOTIVATIONAL POSTER</div>
+                            <div class="tooltip-cost">Cost: <span id="tooltip-motivational-cost">50000</span> Pizzas</div>
+                            <div class="tooltip-effect">Effect: +1000% Pizza Production</div>
+                            <div class="tooltip-description">"Hang in there" cat poster that reminds developers they could be unemployed. Massive boost to pizza appreciation.</div>
+                        </div>
+                    </button>
+                    <button id="corporate-button" class="command-button">
+                        <span class="item-count" id="corporate-count">0</span>
+                        CORPORATE MEMO
+                        <span class="cost"><span id="corporate-cost">200000</span> PIZZAS</span>
+                        <span class="production">+5000% PRODUCTION</span>
+                        <div class="tooltip">
+                            <div class="tooltip-title">CORPORATE MEMO</div>
+                            <div class="tooltip-cost">Cost: <span id="tooltip-corporate-cost">200000</span> Pizzas</div>
+                            <div class="tooltip-effect">Effect: +5000% Pizza Production</div>
+                            <div class="tooltip-description">Official memo explaining that pizza is better than raises because it "builds team spirit." Developers too demoralized to argue.</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">PIZZA ANALYSIS</div>
                 <div class="progress-bar">
-                    <div class="progress-fill"></div>
+                    <div class="progress-fill" id="pizza-progress"></div>
                 </div>
                 <div class="data-row">
-                    <div class="data-label">RADIUS:</div>
-                    <div class="data-value">2.35m</div>
+                    <div class="data-label">SIZE:</div>
+                    <div class="data-value">14 inches</div>
                 </div>
                 <div class="data-row">
-                    <div class="data-label">DENSITY:</div>
-                    <div class="data-value">5.67g/cm³</div>
+                    <div class="data-label">COST:</div>
+                    <div class="data-value">$12.99</div>
                 </div>
                 <div class="data-row">
                     <div class="data-label">TEMP:</div>
-                    <div class="data-value">26.8°C</div>
+                    <div class="data-value">39.5°C</div>
                 </div>
                 <div class="data-row">
-                    <div class="data-label">MASS:</div>
-                    <div class="data-value">189.4kg</div>
+                    <div class="data-label">TOPPINGS:</div>
+                    <div class="data-value" id="toppings-count">2</div>
                 </div>
                 <div class="data-row">
-                    <div class="data-label">PATTERN:</div>
-                    <div class="data-value">BLUE</div>
+                    <div class="data-label">CRUST:</div>
+                    <div class="data-value">THIN</div>
                 </div>
                 <div class="data-row">
-                    <div class="data-label">ROTATION:</div>
-                    <div class="data-value">8.7°/s</div>
+                    <div class="data-label">SLICES:</div>
+                    <div class="data-value">8</div>
                 </div>
-                <div class="warning">WARNING: UNUSUAL ENERGY SIGNATURE DETECTED</div>
+                <div class="data-row">
+                    <div class="data-label">COST-SAVING:</div>
+                    <div class="data-value">$<span id="cost-saving">4,250</span></div>
+                </div>
+                <div class="warning">WARNING: PIZZA NOT A SUBSTITUTE FOR COMPETITIVE COMPENSATION</div>
             </div>
 
             <div class="section">
-                <div class="section-title">CONFIGURATION</div>
-                <div class="hex-container">
+                <div class="section-title">MORALE BOOST CONFIGURATION</div>
+                <div class="hex-container" id="morale-hexes">
                     <div class="hex hex-active"></div>
+                    <div class="hex hex-inactive"></div>
                     <div class="hex hex-active"></div>
                     <div class="hex hex-inactive"></div>
                     <div class="hex hex-inactive"></div>
-                    <div class="hex hex-active"></div>
                 </div>
                 <div class="data-row">
-                    <div class="data-label">SYNC:</div>
-                    <div class="data-value">84.3%</div>
+                    <div class="data-label">EFFECTIVENESS:</div>
+                    <div class="data-value"><span id="morale-effectiveness">12.3</span>%</div>
                 </div>
                 <div class="data-row">
-                    <div class="data-label">HARMONIC:</div>
-                    <div class="data-value">NORMAL</div>
+                    <div class="data-label">SATISFACTION:</div>
+                    <div class="data-value" id="satisfaction-level">LOW</div>
                 </div>
                 <div class="data-row">
-                    <div class="data-label">WAVE:</div>
-                    <div class="data-value">PATTERN-A</div>
+                    <div class="data-label">STRATEGY:</div>
+                    <div class="data-value">PIZZA-INSTEAD-OF-PAY</div>
                 </div>
                 <div class="data-row">
                     <div class="data-label">MODE:</div>
-                    <div class="data-value">OBSERVATION</div>
+                    <div class="data-value">COST-SAVING</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">SCORE:</div>
+                    <div class="data-value"><span id="manager-score">0</span> POINTS</div>
                 </div>
             </div>
 
             <div class="section">
-                <div class="section-title">MAGI ANALYSIS</div>
+                <div class="section-title">MANAGEMENT ANALYSIS</div>
                 <div class="data-row">
-                    <div class="data-label">MELCHIOR:</div>
-                    <div class="data-value">CONFIRMED</div>
+                    <div class="data-label">CEO:</div>
+                    <div class="data-value">APPROVED</div>
                 </div>
                 <div class="data-row">
-                    <div class="data-label">BALTHASAR:</div>
-                    <div class="data-value">CONFIRMED</div>
+                    <div class="data-label">CFO:</div>
+                    <div class="data-value">APPROVED</div>
                 </div>
                 <div class="data-row">
-                    <div class="data-label">CASPER:</div>
-                    <div class="data-value" id="casper-status">VERIFYING...</div>
-                </div>
-            </div>
-
-            <div class="section">
-                <div class="section-title">TERMINAL</div>
-                <div id="terminal-output">
-                    <!-- Terminal output will appear here -->
+                    <div class="data-label">HR:</div>
+                    <div class="data-value" id="hr-status">CALCULATING ROI...</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="terminal">
-        <span>NERV&gt;</span>
-        <input type="text" class="command-input" value="INITIATE" spellcheck="false">
-    </div>
 
     <script>
         // Initialize Three.js
         let scene, camera, renderer;
-        let sphere, wireframe;
+        let pizza, crust, sauce, cheese, toppings = [];
         let rotationSpeed = 0.007;
+        let moraleLevel = 1; // 1-5 scale
+        let managerScore = 0;
+        let toppingTypes = ['pepperoni']; // Only use pepperoni
+        let activeToppings = ['pepperoni']; // Start with just pepperoni
+        let gameActive = false;
+        let pizzaCoins = 0;
+        let pizzaCoinsPerSecond = 0.2;
+        let lastResourceUpdate = Date.now();
+        
+        // Upgrade costs (increase each time)
+        let upgradeCosts = {
+            'displaystand': 10,
+            // 'rotatepizza': 10,
+            'addtopping': 100,
+            'pizzaparty': 1100,
+            'increasebudget': 12000,
+            'motivational': 50000,
+            'corporate': 200000,
+        };
+        
+        // Upgrade multipliers (how much each upgrade increases production)
+        // Multipliers for each upgrade
+        let upgradeMultipliers = {
+            'rotatepizza': 1.1,    // 10% increase per purchase
+            'addtopping': 1.5,     // 50% increase per purchase
+            'pizzaparty': 2.0,     // 100% increase per purchase
+            'increasebudget': 5.0,  // 400% increase per purchase
+            'motivational': 100000,
+            'corporate': 500000,
+        };
+        
+        // Count of each upgrade purchased
+        let upgradeCounts = {
+            'rotatepizza': 0,
+            'addtopping': 0,
+            'pizzaparty': 0,
+            'increasebudget': 0,
+            'motivational': 0,
+            'corporate': 0,
+        };
 
         function init() {
             // Create scene
             scene = new THREE.Scene();
             
-            // Create camera
+            // Create camera with 45-degree angle
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / 2 / window.innerHeight, 0.1, 1000);
-            camera.position.z = 5;
+            camera.position.z = 5; // Increased from 3 to 5 to zoom out
+            camera.position.y = 4; // Increased from 3 to 4 for better top-down view
+            camera.lookAt(0, 0, 0); // Look at the center of the pizza
+            
+            // Add ambient light
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+            
+            // Add directional light for some shadows
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
             
             // Create renderer
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth / 2, window.innerHeight);
             renderer.setClearColor(0x000000, 0);
-            document.getElementById('sphere-canvas').appendChild(renderer.domElement);
+            document.getElementById('pizza-canvas').appendChild(renderer.domElement);
             
-            // Create sphere geometry
-            const geometry = new THREE.SphereGeometry(2, 32, 32);
+            // Create pizza (flattened cylinder) - smaller size
+            const geometry = new THREE.CylinderGeometry(1.5, 1.5, 0.3, 32); // Reduced from 2 to 1.5
             
-            // Create wireframe material
-            const material = new THREE.MeshBasicMaterial({ color: 0x00CED1, wireframe: true });
+            // Create pizza material - use non-wireframe for better visibility
+            const material = new THREE.MeshBasicMaterial({ color: 0xFFA500 });
             
-            // Create sphere with wireframe
-            sphere = new THREE.Mesh(geometry, material);
-            scene.add(sphere);
+            // Create pizza
+            pizza = new THREE.Mesh(geometry, material);
+            scene.add(pizza);
             
-            // Add vertical axis line
-            const lineMaterial = new THREE.LineBasicMaterial({ color: 0xFF4500 });
-            const points = [];
-            points.push(new THREE.Vector3(0, -3, 0));
-            points.push(new THREE.Vector3(0, 3, 0));
-            const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
-            const line = new THREE.Line(lineGeometry, lineMaterial);
-            scene.add(line);
+            // Add crust texture (ring around the edge) - smaller size
+            const crustGeometry = new THREE.TorusGeometry(1.5, 0.3, 16, 32); // Reduced from 2 to 1.5
+            const crustMaterial = new THREE.MeshBasicMaterial({ color: 0xD2691E });
+            crust = new THREE.Mesh(crustGeometry, crustMaterial);
+            crust.rotation.x = Math.PI / 2;
+            scene.add(crust);
+            
+            // Add cheese texture (yellow circle on top of sauce) - smaller size
+            const cheeseGeometry = new THREE.CircleGeometry(1.35, 32); // Reduced from 1.85 to 1.35
+            const cheeseMaterial = new THREE.MeshBasicMaterial({ color: 0xFFD700 });
+            cheese = new THREE.Mesh(cheeseGeometry, cheeseMaterial);
+            cheese.position.y = 0.17;
+            cheese.rotation.x = -Math.PI / 2;
+            scene.add(cheese);
+            
+            // Add slice dividers (8 slices) - adjusted for smaller size
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const lineMaterial = new THREE.LineBasicMaterial({ color: 0x8B4513 });
+                const points = [];
+                points.push(new THREE.Vector3(0, 0.18, 0));
+                points.push(new THREE.Vector3(Math.cos(angle) * 1.5, 0.18, Math.sin(angle) * 1.5)); // Reduced from 2 to 1.5
+                const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+                const line = new THREE.Line(lineGeometry, lineMaterial);
+                scene.add(line);
+            }
+            
+            // Add initial toppings
+            updateToppings();
             
             // Handle window resize
             window.addEventListener('resize', onWindowResize);
@@ -377,12 +882,12 @@
             // Start animation
             animate();
             
-            // Update countdown
-            setInterval(updateCountdown, 1000);
+            // Update resources every second
+            setInterval(updateResources, 1000);
             
-            // Simulate Casper verification
+            // Simulate HR verification
             setTimeout(() => {
-                document.getElementById('casper-status').textContent = 'CONFIRMED';
+                document.getElementById('hr-status').textContent = 'APPROVED';
             }, 5000);
             
             // Add random CRT flicker effect
@@ -395,16 +900,107 @@
                 }
             }, 500);
             
-            // Add command input handling
-            setupCommandInput();
+            // Update button states
+            updateButtonStates();
+            
+            // Auto-start the game instead of showing instructions
+            startGame();
+            
+            // Setup restart button
+            document.getElementById('restart-game-btn').addEventListener('click', restartGame);
+            
+            // Add click handler to pizza for clicker functionality
+            document.getElementById('pizza-canvas').addEventListener('click', clickPizza);
+            
+            // Setup save button
+            document.getElementById('save-button').addEventListener('click', function() {
+                if (!gameActive) return;
+                
+                saveGameState();
+                
+                // Show save notification
+                const notification = document.createElement('div');
+                notification.className = 'save-notification';
+                notification.textContent = 'GAME SAVED';
+                document.body.appendChild(notification);
+                
+                // Remove notification after animation completes
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 2000);
+            });
+        }
+        
+        function updateToppings() {
+            // Clear existing toppings
+            for (let topping of toppings) {
+                scene.remove(topping);
+            }
+            toppings = [];
+            
+            // Add pepperoni (red disks)
+            if (activeToppings.includes('pepperoni')) {
+                for (let i = 0; i < 20; i++) {
+                    const toppingGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.05, 16);
+                    const toppingMaterial = new THREE.MeshBasicMaterial({ color: 0xFF4500 });
+                    const topping = new THREE.Mesh(toppingGeometry, toppingMaterial);
+                    
+                    // Random position on the pizza - adjusted for smaller size
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * 1.3; // Reduced from 1.7 to 1.3
+                    topping.position.x = Math.cos(angle) * distance;
+                    topping.position.z = Math.sin(angle) * distance;
+                    topping.position.y = 0.2;
+                    
+                    // Store original position for animation
+                    topping.userData = {
+                        originalX: topping.position.x,
+                        originalZ: topping.position.z,
+                        angle: angle,
+                        distance: distance,
+                        bobSpeed: 0.5 + Math.random() * 0.5
+                    };
+                    
+                    scene.add(topping);
+                    toppings.push(topping);
+                }
+            }
+            
+            // Update toppings count in UI
+            document.getElementById('toppings-count').textContent = activeToppings.length;
         }
         
         function animate() {
             requestAnimationFrame(animate);
             
-            // Rotate the sphere
-            sphere.rotation.y += rotationSpeed;
-            sphere.rotation.x += rotationSpeed * 0.5;
+            // Rotate the pizza
+            pizza.rotation.y += rotationSpeed;
+            
+            // Also rotate all objects that should rotate with the pizza
+            if (crust) crust.rotation.z += rotationSpeed;
+            if (sauce) sauce.rotation.z += rotationSpeed;
+            if (cheese) cheese.rotation.z += rotationSpeed;
+            
+            // Rotate all toppings with the pizza
+            for (let topping of toppings) {
+                if (topping.userData) {
+                    // For pepperoni, add a slight bobbing motion
+                    const time = Date.now() * 0.001;
+                    const bobHeight = Math.sin(time * topping.userData.bobSpeed) * 0.03;
+                    
+                    // Rotate with pizza
+                    const newAngle = topping.userData.angle + pizza.rotation.y;
+                    topping.position.x = Math.cos(newAngle) * topping.userData.distance;
+                    topping.position.z = Math.sin(newAngle) * topping.userData.distance;
+                    
+                    // Add bobbing
+                    topping.position.y = 0.2 + bobHeight;
+                }
+                
+                if (topping.rotation) {
+                    topping.rotation.y += rotationSpeed;
+                }
+            }
             
             renderer.render(scene, camera);
         }
@@ -415,117 +1011,711 @@
             renderer.setSize(window.innerWidth / 2, window.innerHeight);
         }
         
-        function updateCountdown() {
-            const countdownElement = document.getElementById('countdown');
-            const currentTime = countdownElement.textContent;
+        function addTopping() {
+            // Since we only have pepperoni, this function will just increase the production rate
+            // without actually adding new toppings
+            // Increase pizzas per second
+            pizzaCoinsPerSecond += 0.1;
+            return 'pepperoni'; // Always return pepperoni
+        }
+        
+        // New function to update resources over time
+        function updateResources() {
+            if (!gameActive) return;
             
-            let [hours, minutes, seconds] = currentTime.split(':').map(Number);
+            // Add pizzas based on rate
+            pizzaCoins += pizzaCoinsPerSecond;
             
-            seconds--;
-            if (seconds < 0) {
-                seconds = 59;
-                minutes--;
-                if (minutes < 0) {
-                    minutes = 59;
-                    hours--;
-                    if (hours < 0) {
-                        hours = 0;
-                        minutes = 0;
-                        seconds = 0;
+            // Update the display
+            updateDisplay();
+            
+            // Save game state every 10 seconds
+            const now = Date.now();
+            if (now - lastResourceUpdate > 10000) {
+                saveGameState();
+                lastResourceUpdate = now;
+            }
+        }
+        
+        // Calculate pizzas per second based on upgrades
+        function calculatePizzasPerSecond() {
+            // Base production rate
+            let baseRate = 0.2;
+            
+            // Calculate multiplier from all upgrades
+            let multiplier = 1;
+            
+            // Apply multiplier for each upgrade based on count
+            for (const upgrade in upgradeCounts) {
+                if (upgradeCounts[upgrade] > 0) {
+                    // Each upgrade adds its multiplier effect for each purchase
+                    for (let i = 0; i < upgradeCounts[upgrade]; i++) {
+                        multiplier *= upgradeMultipliers[upgrade];
                     }
                 }
             }
             
-            countdownElement.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            // Return the calculated rate
+            return baseRate * multiplier;
         }
         
-        // Setup command input functionality
-        function setupCommandInput() {
-            const inputElement = document.querySelector('.command-input');
-            const outputElement = document.getElementById('terminal-output');
+        // New function for clicking the pizza
+        function clickPizza() {
+            if (!gameActive) return;
             
-            // Command responses
-            const commands = {
-                'help': 'Available commands: help, status, initiateThirdImpact, activate, ping, decrypt, launch, login, evangelion, abort, version',
-                'status': 'All systems operational. AT Field stable. Pattern: Blue.',
-                'initiatethirdimpact': 'ERROR: Third Impact sequence requires authorization from SEELE committee. Access denied.',
-                'activate': 'Activating NERV defense systems. Eva Units standing by.',
-                'ping': 'Connection established. Latency: 0.015ms. MAGI systems responding.',
-                'decrypt': 'Decrypting Dead Sea Scrolls data... [ACCESS DENIED] - Clearance level insufficient.',
-                'launch': 'Eva launch sequence initiated. Catapult systems engaged. Pilot synchronization at nominal levels.',
-                'login': 'Welcome, Commander Ikari.',
-                'evangelion': 'Eva Units: Unit-00 (Standby), Unit-01 (Active), Unit-02 (Standby), Unit-03 (Damaged).',
-                'abort': 'Mission aborted. All systems returning to standby mode.',
-                'version': 'NERV Terminal v3.14 - "Project E" - Build 2025.01',
-                'initiate': 'Initiating primary systems... Connecting to MAGI... Connection established.'
+            // Add pizzas
+            pizzaCoins += 1;
+            
+            // Update the display
+            updateDisplay();
+            
+            // Play click sound
+            const clickSound = document.getElementById('pizza-click-sound');
+            clickSound.currentTime = 0;
+            clickSound.play().catch(e => console.log("Audio play failed:", e));
+            
+            // Add click animation to the pizza
+            const pizzaCanvas = document.getElementById('pizza-canvas');
+            pizzaCanvas.classList.add('pizza-clicked');
+            
+            // Remove the animation class after it completes
+            setTimeout(() => {
+                pizzaCanvas.classList.remove('pizza-clicked');
+            }, 200);
+            
+            // Create a floating +1 text
+            const floatingText = document.createElement('div');
+            floatingText.textContent = '+1';
+            floatingText.style.position = 'absolute';
+            floatingText.style.color = '#FFD700';
+            floatingText.style.fontSize = '20px';
+            floatingText.style.fontWeight = 'bold';
+            floatingText.style.pointerEvents = 'none';
+            
+            // Random position within the pizza canvas
+            const x = Math.random() * pizzaCanvas.offsetWidth;
+            const y = Math.random() * pizzaCanvas.offsetHeight;
+            floatingText.style.left = `${x}px`;
+            floatingText.style.top = `${y}px`;
+            
+            // Animation
+            floatingText.style.animation = 'float-up 1.5s forwards';
+            
+            // Add to DOM
+            pizzaCanvas.appendChild(floatingText);
+            
+            // Remove after animation
+            setTimeout(() => {
+                pizzaCanvas.removeChild(floatingText);
+            }, 1500);
+            
+            // Update button states
+            updateButtonStates();
+        }
+        
+        // Function to update the display with current values
+        function updateDisplay() {
+            // Update pizza coins display
+            document.getElementById('pizza-coins').textContent = Math.floor(pizzaCoins);
+            
+            // Update pizza coins per second display
+            document.getElementById('pizza-coins-per-second').textContent = pizzaCoinsPerSecond.toFixed(1);
+            
+            // Update manager score
+            document.getElementById('manager-score').textContent = managerScore;
+            
+            // Update cost saving display (just for visual effect)
+            document.getElementById('cost-saving').textContent = (4250 + Math.floor(pizzaCoins)).toLocaleString();
+            
+            // Update morale effectiveness
+            document.getElementById('morale-effectiveness').textContent = (12.3 + (pizzaCoinsPerSecond * 2)).toFixed(1);
+            
+            // Update satisfaction level based on pizzaCoinsPerSecond
+            const satisfactionElement = document.getElementById('satisfaction-level');
+            if (pizzaCoinsPerSecond < 1) {
+                satisfactionElement.textContent = 'LOW';
+                satisfactionElement.style.color = '#FF6347'; // Red
+            } else if (pizzaCoinsPerSecond < 10) {
+                satisfactionElement.textContent = 'MODERATE';
+                satisfactionElement.style.color = '#FFA500'; // Orange
+            } else if (pizzaCoinsPerSecond < 100) {
+                satisfactionElement.textContent = 'ADEQUATE';
+                satisfactionElement.style.color = '#FFFF00'; // Yellow
+            } else {
+                satisfactionElement.textContent = 'TEMPORARY';
+                satisfactionElement.style.color = '#32CD32'; // Green
+            }
+            
+            // Update upgrade counts and costs
+            for (const upgrade in upgradeCounts) {
+                // Update count badges
+                const countElement = document.getElementById(`${upgrade}-count`);
+                if (countElement) {
+                    countElement.textContent = upgradeCounts[upgrade];
+                }
+                
+                // Update cost displays
+                const costElement = document.getElementById(`${upgrade}-cost`);
+                if (costElement) {
+                    costElement.textContent = upgradeCosts[upgrade];
+                }
+                
+                // Update tooltip costs
+                const tooltipCostElement = document.getElementById(`tooltip-${upgrade}-cost`);
+                if (tooltipCostElement) {
+                    tooltipCostElement.textContent = upgradeCosts[upgrade];
+                }
+            }
+        }
+        
+        function startGame() {
+            console.log('starting game');
+            gameActive = true;
+            
+            // Try to load saved game state
+            const hasSavedState = loadGameState();
+            
+            if (!hasSavedState) {
+                console.log('no saved state, initializing new game');
+                // Initialize new game if no saved state
+                managerScore = 0;
+                moraleLevel = 1; // Start at MODERATE
+                pizzaCoins = 0; // Start with 0 pizzas
+                pizzaCoinsPerSecond = 0.2; // Start with base production rate
+                
+                // Reset upgrade costs
+                upgradeCosts = {
+                    'rotatepizza': 10,
+                    'addtopping': 100,
+                    'pizzaparty': 1100,
+                    'increasebudget': 12000,
+                    'motivational': 50000,
+                    'corporate': 200000,
+                };
+                
+                // Reset upgrade counts
+                upgradeCounts = {
+                    'rotatepizza': 0,
+                    'addtopping': 0,
+                    'pizzaparty': 0,
+                    'increasebudget': 0,
+                    'motivational': 0,
+                    'corporate': 0,
+                };
+                
+            }
+            
+            // Update the display
+            updateDisplay();
+            
+            // Show welcome message
+            showNotification("MANAGEMENT SIMULATION STARTED - DEPLOY PIZZA STRATEGICALLY");
+            
+            // Setup command buttons
+            setupCommandButtons();
+            
+            // Update button states initially
+            updateButtonStates();
+        }
+        
+        function restartGame() {
+            document.getElementById('game-result-overlay').style.display = 'none';
+            
+            // Reset game state
+            managerScore = 0;
+            moraleLevel = 1;
+            activeToppings = ['pepperoni'];
+            pizzaCoins = 0;
+            pizzaCoinsPerSecond = 0;
+            
+            // Reset upgrade costs
+            upgradeCosts = {
+                'rotatepizza': 10,
+                'addtopping': 100,
+                'pizzaparty': 1100,
+                'increasebudget': 12000
             };
             
-            // Default error response
-            const defaultResponse = 'Command not recognized. Type "help" for available commands.';
+            // Reset upgrade counts
+            upgradeCounts = {
+                'rotatepizza': 0,
+                'addtopping': 0,
+                'pizzaparty': 0,
+                'increasebudget': 0,
+                'motivational': 0,
+                'corporate': 0,
+            };
             
-            // Handle Enter key press
-            inputElement.addEventListener('keydown', function(event) {
-                if (event.key === 'Enter') {
-                    const command = this.value.toLowerCase().trim();
+            updateToppings();
+            
+            gameActive = true;
+        }
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            
+            // Create container for message and close button
+            const messageContainer = document.createElement('div');
+            messageContainer.className = 'notification-content';
+            messageContainer.textContent = message;
+            messageContainer.style.fontSize = '18px'; // Increased font size
+            
+            // Create close button
+            const closeButton = document.createElement('div');
+            closeButton.className = 'notification-close';
+            closeButton.textContent = 'x';
+            closeButton.style.cursor = 'pointer';
+            closeButton.style.marginLeft = '10px';
+            closeButton.style.fontSize = '18px'; // Increased font size
+            closeButton.style.fontWeight = 'bold';
+            
+            // Add event listener to close button
+            closeButton.addEventListener('click', () => {
+                document.body.removeChild(notification);
+            });
+            
+            // Add message and close button to notification
+            notification.appendChild(messageContainer);
+            notification.appendChild(closeButton);
+            
+            // Style the notification as a flex container
+            notification.style.display = 'flex';
+            notification.style.justifyContent = 'space-between';
+            notification.style.alignItems = 'center';
+            notification.style.fontSize = '18px'; // Increased font size for the entire notification
+            
+            notification.style.top = '50%'; // Move to vertical center
+            notification.style.transform = 'translate(-50%, -50%)'; // Center both horizontally and vertically
+            document.body.appendChild(notification);
+            
+            // Remove notification after animation completes
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 4000);
+        }
+
+        // Setup command buttons
+        function setupCommandButtons() {
+            // Remove existing event listeners to prevent duplicates
+            const commandButtons = document.querySelectorAll('.command-button');
+            commandButtons.forEach(button => {
+                const newButton = button.cloneNode(true);
+                button.parentNode.replaceChild(newButton, button);
+            });
+            
+            // Add event listeners for tooltips to ensure they're visible
+            document.querySelectorAll('.command-button').forEach(button => {
+                button.addEventListener('mouseenter', function() {
+                    const tooltip = this.querySelector('.tooltip');
+                    if (tooltip) {
+                        // Make sure tooltip is visible
+                        tooltip.style.opacity = '1';
+                        tooltip.style.visibility = 'visible';
+                    }
+                });
+                
+                button.addEventListener('mouseleave', function() {
+                    const tooltip = this.querySelector('.tooltip');
+                    if (tooltip) {
+                        tooltip.style.opacity = '0';
+                        tooltip.style.visibility = 'hidden';
+                    }
+                });
+            });
+            
+            // Pizza Party button (now Pizza Oven)
+            document.getElementById('pizzaparty-button').addEventListener('click', function() {
+                console.log('Oven upgrade button hit');
+                if (!gameActive) return;
+                
+                // No cooldown check needed
+                
+                if (pizzaCoins < upgradeCosts['pizzaparty']) {
+                    showNotification(`Not enough Pizzas. Need ${upgradeCosts['pizzaparty']} pizzas.`);
+                    return;
+                }
+                
+                // Deduct cost
+                pizzaCoins -= upgradeCosts['pizzaparty'];
+                
+                // No cooldown needed
+                
+                // Increase cost for next time
+                upgradeCosts['pizzaparty'] = Math.floor(upgradeCosts['pizzaparty'] * upgradeMultipliers['pizzaparty']);
+                
+                // Increment upgrade count
+                upgradeCounts['pizzaparty']++;
+                
+                // Recalculate pizzas per second
+                pizzaCoinsPerSecond = calculatePizzasPerSecond();
+                
+                // Update the display
+                updateDisplay();
+                
+                // Add to terminal output
+                const outputElement = document.getElementById('terminal-output');
+                const commandLine = document.createElement('div');
+                commandLine.textContent = `STORE> Purchased Pizza Oven`;
+                commandLine.style.color = '#FF6347';
+                outputElement.appendChild(commandLine);
+                
+                const response = document.createElement('div');
+                response.textContent = `New oven installed! Pizza party scheduled. Developers temporarily distracted from compensation issues. +50 MANAGER POINTS. Pizza production increased by 100%! Next oven will cost ${upgradeCosts['pizzaparty']} pizzas.`;
+                outputElement.appendChild(response);
+                
+                // Scroll to bottom of output
+                outputElement.scrollTop = outputElement.scrollHeight;
+                
+                showNotification("New Pizza Oven installed! Morale temporarily boosted.");
+                
+                // Save game state after purchase
+                saveGameState();
+                
+                // Update button states
+                updateButtonStates();
+            });
+            
+            // Add Topping button
+            document.getElementById('addtopping-button').addEventListener('click', function() {
+                if (!gameActive) return;
+                
+                // No cooldown check needed
+                
+                if (pizzaCoins < upgradeCosts['addtopping']) {
+                    showNotification(`Not enough Pizzas. Need ${upgradeCosts['addtopping']} pizzas.`);
+                    return;
+                }
+                
+                const newTopping = addTopping();
+                if (newTopping) {
+                    // Deduct cost
+                    pizzaCoins -= upgradeCosts['addtopping'];
                     
-                    // Display command in terminal output
+                    // No cooldown needed
+                    
+                    // Increase cost for next time
+                    upgradeCosts['addtopping'] = Math.floor(upgradeCosts['addtopping'] * upgradeMultipliers['addtopping']);
+                    
+                    // Increment upgrade count
+                    upgradeCounts['addtopping']++;
+                    
+                    // Recalculate pizzas per second
+                    pizzaCoinsPerSecond = calculatePizzasPerSecond();
+                    
+                    const toppingNames = {
+                        'pepperoni': 'More Pepperoni'
+                    };
+                    
+                    // Add to terminal output
+                    const outputElement = document.getElementById('terminal-output');
                     const commandLine = document.createElement('div');
-                    commandLine.textContent = `NERV> ${this.value}`;
-                    commandLine.style.color = '#FF4500';
+                    commandLine.textContent = `STORE> Purchased Topping Station`;
+                    commandLine.style.color = '#FF6347';
                     outputElement.appendChild(commandLine);
                     
-                    // Process command and display response
                     const response = document.createElement('div');
-                    
-                    // Special case for sphere manipulation
-                    if (command === 'rotate faster') {
-                        rotationSpeed *= 2;
-                        response.textContent = 'Sphere rotation speed increased.';
-                    } else if (command === 'rotate slower') {
-                        rotationSpeed /= 2;
-                        response.textContent = 'Sphere rotation speed decreased.';
-                    } else if (command === 'self destruct') {
-                        document.body.classList.add('alarm');
-                        setTimeout(() => {
-                            const warningDiv = document.createElement('div');
-                            warningDiv.textContent = 'SELF DESTRUCT SEQUENCE INITIATED';
-                            warningDiv.style.color = 'red';
-                            warningDiv.style.fontWeight = 'bold';
-                            outputElement.appendChild(warningDiv);
-                            
-                            // Add explosion effect
-                            const container = document.querySelector('#container');
-                            container.innerHTML = '';
-                            container.style.backgroundColor = 'red';
-                            
-                            setTimeout(() => {
-                                container.style.backgroundColor = 'white';
-                                setTimeout(() => {
-                                    container.style.backgroundColor = 'black';
-                                    container.innerHTML = '<div style="color: white; text-align: center; margin-top: 40vh; font-size: 24px;">TERMINAL OFFLINE</div>';
-                                }, 200);
-                            }, 200);
-                        }, 2000);
-                        response.textContent = 'WARNING: Self-destruct sequence requires confirmation. Type "confirm" to proceed or "abort" to cancel.';
-                    } else {
-                        response.textContent = commands[command] || defaultResponse;
-                    }
-                    
+                    response.textContent = `${toppingNames[newTopping]} added to pizza! Developers momentarily distracted by extra pepperoni. +25 MANAGER POINTS. Pizza production increased by 50%! Next topping will cost ${upgradeCosts['addtopping']} pizzas.`;
                     outputElement.appendChild(response);
                     
                     // Scroll to bottom of output
                     outputElement.scrollTop = outputElement.scrollHeight;
                     
-                    // Clear input
-                    this.value = '';
+                    showNotification(`More pepperoni added to pizza! Pizzas/sec increased.`);
+                    
+                    // Save game state after purchase
+                    saveGameState();
+                    
+                    // Update button states
+                    updateButtonStates();
+                } else {
+                    showNotification('ERROR: Maximum toppings reached. Pizza optimization complete.');
                 }
+                
+            });
+            
+            // Increase Budget button
+            document.getElementById('increasebudget-button').addEventListener('click', function() {
+                if (!gameActive) return;
+                
+                // No cooldown check needed
+                
+                if (pizzaCoins < upgradeCosts['increasebudget']) {
+                    showNotification(`Not enough Pizzas. Need ${upgradeCosts['increasebudget']} pizzas.`);
+                    return;
+                }
+                
+                // Deduct cost
+                pizzaCoins -= upgradeCosts['increasebudget'];
+                
+                // No cooldown needed
+                
+                // Increase cost for next time
+                upgradeCosts['increasebudget'] = Math.floor(upgradeCosts['increasebudget'] * upgradeMultipliers['increasebudget']);
+                
+                // Increment upgrade count
+                upgradeCounts['increasebudget']++;
+                
+                // Recalculate pizzas per second
+                pizzaCoinsPerSecond = calculatePizzasPerSecond();
+                
+                // Update the display
+                updateDisplay();
+                
+                managerScore += 100;
+                
+                // Add to terminal output
+                const outputElement = document.getElementById('terminal-output');
+                const commandLine = document.createElement('div');
+                commandLine.textContent = `STORE> Purchased Delivery Truck`;
+                commandLine.style.color = '#FF6347';
+                outputElement.appendChild(commandLine);
+                
+                const response = document.createElement('div');
+                response.textContent = `Budget for pizza increased! Salary budget decreased proportionally. +100 MANAGER POINTS. Pizza production increased by 400%! Next budget increase will cost ${upgradeCosts['increasebudget']} pizzas.`;
+                outputElement.appendChild(response);
+                
+                // Scroll to bottom of output
+                outputElement.scrollTop = outputElement.scrollHeight;
+                
+                showNotification("Budget increased! Pizza production boosted!");
+                
+                // Save game state after purchase
+                saveGameState();
+                
+                // Update button states
+                updateButtonStates();
+                
+            });
+            
+            // Display Stand button
+            document.getElementById('rotatepizza-button').addEventListener('click', function() {
+                if (!gameActive) return;
+                
+                // No cooldown check needed
+                
+                if (pizzaCoins < upgradeCosts['rotatepizza']) {
+                    showNotification(`Not enough Pizzas. Need ${upgradeCosts['rotatepizza']} pizzas.`);
+                    return;
+                }
+
+                // Deduct cost
+                pizzaCoins -= upgradeCosts['rotatepizza'];
+                
+                // Increase cost for next time
+                upgradeCosts['rotatepizza'] = Math.floor(upgradeCosts['rotatepizza'] * upgradeMultipliers['rotatepizza']);
+                
+                // Increment upgrade count
+                upgradeCounts['rotatepizza']++;
+                
+                // Update rotation speed
+                rotationSpeed = rotationSpeed < 0.02 ? rotationSpeed * 1.5 : 0.007;
+                
+                // Recalculate pizzas per second
+                pizzaCoinsPerSecond = calculatePizzasPerSecond();
+                
+                // Update the display
+                updateDisplay();
+                
+                // Add to terminal output
+                const outputElement = document.getElementById('terminal-output');
+                const commandLine = document.createElement('div');
+                commandLine.textContent = `STORE> Purchased Display Stand`;
+                commandLine.style.color = '#FF6347';
+                outputElement.appendChild(commandLine);
+                
+                const response = document.createElement('div');
+                response.textContent = `Display stand upgraded! Developers mesmerized by spinning pizza presentation. +10 MANAGER POINTS. Pizza production increased by 10%! Next display stand upgrade will cost ${upgradeCosts['rotatepizza']} pizzas.`;
+                outputElement.appendChild(response);
+                
+                // Scroll to bottom of output
+                outputElement.scrollTop = outputElement.scrollHeight;
+                
+                showNotification(`Display stand upgraded! Pizza presentation improved!`);
+                managerScore += 10;
+                
+                // Save game state after purchase
+                saveGameState();
+                
+                // Update button states
+                updateButtonStates();
+                
+            });
+            
+            // Motivational Poster button
+            document.getElementById('motivational-button').addEventListener('click', function() {
+                if (!gameActive) return;
+                
+                if (pizzaCoins < upgradeCosts['motivational']) {
+                    showNotification(`Not enough Pizzas. Need ${upgradeCosts['motivational']} pizzas.`);
+                    return;
+                }
+                
+                // Deduct cost
+                pizzaCoins -= upgradeCosts['motivational'];
+                
+                // Increase cost for next time
+                upgradeCosts['motivational'] = Math.floor(upgradeCosts['motivational'] * 1.5);
+                
+                // Increment upgrade count
+                upgradeCounts['motivational']++;
+                
+                // Recalculate pizzas per second
+                pizzaCoinsPerSecond = calculatePizzasPerSecond();
+                
+                // Update the display
+                updateDisplay();
+                
+                managerScore += 200;
+                
+                // Add to terminal output
+                const outputElement = document.getElementById('terminal-output');
+                const commandLine = document.createElement('div');
+                commandLine.textContent = `STORE> Purchased Motivational Poster`;
+                commandLine.style.color = '#FF6347';
+                outputElement.appendChild(commandLine);
+                
+                const response = document.createElement('div');
+                response.textContent = `"Hang in there" cat poster installed! Developers reminded they could be unemployed. +200 MANAGER POINTS. Pizza production increased by 1000%! Next poster will cost ${upgradeCosts['motivational']} pizzas.`;
+                outputElement.appendChild(response);
+                
+                // Scroll to bottom of output
+                outputElement.scrollTop = outputElement.scrollHeight;
+                
+                showNotification(`Motivational poster installed! Morale temporarily boosted!`);
+                
+                // Save game state after purchase
+                saveGameState();
+                
+                // Update button states
+                updateButtonStates();
+            });
+            
+            // Corporate Memo button
+            document.getElementById('corporate-button').addEventListener('click', function() {
+                if (!gameActive) return;
+                
+                if (pizzaCoins < upgradeCosts['corporate']) {
+                    showNotification(`Not enough Pizzas. Need ${upgradeCosts['corporate']} pizzas.`);
+                    return;
+                }
+                
+                // Deduct cost
+                pizzaCoins -= upgradeCosts['corporate'];
+                
+                // Increase cost for next time
+                upgradeCosts['corporate'] = Math.floor(upgradeCosts['corporate'] * 1.5);
+                
+                // Increment upgrade count
+                upgradeCounts['corporate']++;
+                
+                // Recalculate pizzas per second
+                pizzaCoinsPerSecond = calculatePizzasPerSecond();
+                
+                // Update the display
+                updateDisplay();
+                
+                managerScore += 500;
+                
+                // Add to terminal output
+                const outputElement = document.getElementById('terminal-output');
+                const commandLine = document.createElement('div');
+                commandLine.textContent = `STORE> Purchased Corporate Memo`;
+                commandLine.style.color = '#FF6347';
+                outputElement.appendChild(commandLine);
+                
+                const response = document.createElement('div');
+                response.textContent = `Corporate memo distributed! "Pizza builds team spirit better than raises." Developers too demoralized to argue. +500 MANAGER POINTS. Pizza production increased by 5000%! Next memo will cost ${upgradeCosts['corporate']} pizzas.`;
+                outputElement.appendChild(response);
+                
+                // Scroll to bottom of output
+                outputElement.scrollTop = outputElement.scrollHeight;
+                
+                showNotification(`Corporate memo distributed! Morale temporarily boosted!`);
+                
+                // Save game state after purchase
+                saveGameState();
+                
+                // Update button states
+                updateButtonStates();
             });
         }
         
-        // Make input field active when clicked
-        document.querySelector('.command-input').addEventListener('click', function() {
-            this.focus();
-        });
+        // New function to update button states based on affordability
+        function updateButtonStates() {
+            if (!gameActive) return;
+            
+            // Check each upgrade button
+            for (const upgrade in upgradeCosts) {
+                const button = document.getElementById(`${upgrade}-button`);
+                if (button) {
+                    const affordable = pizzaCoins >= upgradeCosts[upgrade];
+                    const hasBeenPurchased = upgradeCounts[upgrade] > 0;
+                    
+                    // Disable button if not enough pizzas
+                    button.disabled = !affordable;
+                    
+                    // Remove all classes first
+                    button.classList.remove('unaffordable', 'locked', 'unlocked');
+                    
+                    // Add appropriate classes based on affordability and purchase history
+                    if (!affordable) {
+                        button.classList.add('unaffordable');
+                        
+                        if (hasBeenPurchased) {
+                            // Item has been purchased before, so it's unlocked
+                            button.classList.add('unlocked');
+                        } else {
+                            // Item has never been purchased, so it's locked
+                            button.classList.add('locked');
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Save game state to local storage
+        function saveGameState() {
+            if (!gameActive) return;
+            
+            const gameState = {
+                pizzaCoins,
+                pizzaCoinsPerSecond,
+                moraleLevel,
+                managerScore,
+                activeToppings,
+                upgradeCosts,
+                upgradeCounts,
+                rotationSpeed
+            };
+            
+            localStorage.setItem('pizzaPartyGameState', JSON.stringify(gameState));
+        }
+        
+        // Load game state from local storage
+        function loadGameState() {
+            const savedState = localStorage.getItem('pizzaPartyGameState');
+            
+            if (savedState) {
+                const gameState = JSON.parse(savedState);
+                
+                pizzaCoins = gameState.pizzaCoins;
+                pizzaCoinsPerSecond = gameState.pizzaCoinsPerSecond;
+                moraleLevel = gameState.moraleLevel;
+                managerScore = gameState.managerScore;
+                activeToppings = gameState.activeToppings;
+                upgradeCosts = gameState.upgradeCosts;
+                upgradeCounts = gameState.upgradeCounts;
+                rotationSpeed = gameState.rotationSpeed;
+                
+                updateToppings();
+                updateDisplay(); // Update the display after loading game state
+                return true;
+            }
+            
+            return false;
+        }
         
         // Initialize everything
         window.onload = init;
