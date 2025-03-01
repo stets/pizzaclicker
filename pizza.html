@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT Pizza Party Interface</title>
+    <title>Pizza Clicker 3000</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body {
@@ -69,7 +69,7 @@
         
         #data-container {
             padding: 20px;
-            margin-top: 20px;
+            margin-top: 40px;
             height: 100%;
             box-sizing: border-box;
             overflow-y: auto;
@@ -138,27 +138,6 @@
         
         .hex-inactive {
             background-color: #444;
-        }
-        
-        #terminal {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            padding: 10px;
-            background-color: rgba(0, 0, 0, 0.8);
-            border-top: 1px solid #333;
-            font-size: 18px;
-        }
-        
-        .command-input {
-            background-color: transparent;
-            border: none;
-            color: #FF6347;
-            font-family: monospace;
-            font-size: 18px;
-            width: 90%;
-            outline: none;
         }
         
         #terminal-output {
@@ -331,6 +310,7 @@
         }
         
         .command-button {
+            font-size: 16px;
             background-color: #333;
             color: #FF6347;
             border: 1px solid #FF6347;
@@ -407,25 +387,20 @@
             border-color: #444; /* Darker border for disabled buttons */
         }
         
-        .cooldown {
-            font-size: 12px;
-            color: #32CD32;
-            margin-top: 3px;
-        }
-        
         .cost {
-            font-size: 12px;
+            font-size: 18px;
             color: #FFD700;
         }
         
         .production {
-            font-size: 12px;
+            font-size: 14px;
             color: #32CD32;
             margin-top: 3px;
         }
         
         /* Resource display */
         .resource-display {
+            font-size: 22px;
             position: absolute;
             top: 80px;
             left: 25%;
@@ -445,24 +420,7 @@
             position: relative;
         }
         
-        #pizza-canvas::after {
-            content: "CLICK ME";
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #FF0000; /* Changed from #FFD700 to bright red for better visibility */
-            font-family: monospace;
-            font-size: 24px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-        }
-        
-        #pizza-canvas:hover::after {
-            opacity: 0.7;
-        }
-        
+
         /* Add save button style */
         #save-button {
             position: absolute;
@@ -589,17 +547,7 @@
             80% { bottom: 50px; }
             100% { bottom: -200px; }
         }
-        
-        /* Make PIZZA CLICKER v3.0 more prominent */
-        .main-title {
-            color: #FFA500;
-            font-size: 28px;
-            font-weight: bold;
-            text-align: center;
-            margin-top: 5px;
-            text-shadow: 0 0 10px rgba(255, 165, 0, 0.5);
-            letter-spacing: 2px;
-        }
+
     </style>
 </head>
 <body>
@@ -612,7 +560,7 @@
         <source src="./click.mp3" type="audio/mp3">
     </audio>
     <audio id="lumberg-sound" preload="auto">
-        <source src="./lumberg.mp3" type="audio/mp3">
+        <source src="./hello_lumberg.mp3" type="audio/mp3">
     </audio>
     
     <!-- Game instructions overlay completely removed -->
@@ -628,14 +576,9 @@
 
     <div id="header">
         <div class="logo">
-            <div class="logo-text">🍕 PIZZA CLICKER</div>
+            <div class="logo-text">🍕 PIZZA CLICKER 3000</div>
         </div>
-        <div class="status">MORALE STATUS: <span id="morale-status">LOW</span></div>
-        <div class="timer">TIME PLAYED: <span id="countdown">00:00:00</span></div>
     </div>
-
-    <!-- Main title - more prominent -->
-    <div class="main-title">PIZZA CLICKER v3.0</div>
 
     <!-- Resource display -->
     <div class="resource-display">
@@ -662,7 +605,8 @@
                     <button id="rotatepizza-button" class="command-button">
                         <span class="item-count" id="rotatepizza-count">0</span>
                         DISPLAY STAND
-                        <span class="cost"><span id="rotatepizza-cost">10</span> PIZZAS</span>
+                        <span class="cost">
+                            🍕 <span id="rotatepizza-cost">10</span></span>
                         <span class="production">+10% PRODUCTION</span>
                         <div class="tooltip">
                             <div class="tooltip-title">DISPLAY STAND</div>
@@ -820,26 +764,19 @@
         </div>
     </div>
 
-    <div id="terminal">
-        <span>IT&gt;</span>
-        <input type="text" class="command-input" value="deliverPizza" spellcheck="false">
-    </div>
 
     <script>
         // Initialize Three.js
         let scene, camera, renderer;
         let pizza, crust, sauce, cheese, toppings = [];
         let rotationSpeed = 0.007;
-        let moraleLevel = 0; // 0 = LOW, 1 = MODERATE, 2 = ADEQUATE, 3 = TEMPORARY
+        let moraleLevel = 1; // 1-5 scale
         let managerScore = 0;
         let toppingTypes = ['pepperoni']; // Only use pepperoni
         let activeToppings = ['pepperoni']; // Start with just pepperoni
         let gameActive = false;
-        let obstacleTimer;
-        
-        // Clicker game resources
-        let pizzaCoins = 0; // Start with 0 pizzas
-        let pizzaCoinsPerSecond = 0; // Start with 0 pizzas per second
+        let pizzaCoins = 0;
+        let pizzaCoinsPerSecond = 0.2;
         let lastResourceUpdate = Date.now();
         
         // Upgrade costs (increase each time)
@@ -853,6 +790,7 @@
             'corporate': 200000,
         };
         
+        // Upgrade multipliers (how much each upgrade increases production)
         // Multipliers for each upgrade
         let upgradeMultipliers = {
             'rotatepizza': 1.1,    // 10% increase per purchase
@@ -872,15 +810,6 @@
             'motivational': 0,
             'corporate': 0,
         };
-        
-        let gameEvents = [
-            { type: 'deadline', message: 'URGENT: Project deadline moved up by 2 weeks!' },
-            { type: 'bug', message: 'CRITICAL BUG: Production system down!' },
-            { type: 'competitor', message: 'ALERT: Competitor offering 30% higher salaries!' },
-            { type: 'meeting', message: 'MANDATORY: 3-hour meeting about TPS reports scheduled!' },
-            { type: 'overtime', message: 'NOTICE: Weekend work required to meet deadlines!' },
-            { type: 'review', message: 'PERFORMANCE REVIEW: IT department efficiency questioned!' }
-        ];
 
         function init() {
             // Create scene
@@ -924,14 +853,6 @@
             crust.rotation.x = Math.PI / 2;
             scene.add(crust);
             
-            // Add sauce texture (red circle on top) - smaller size
-            // const sauceGeometry = new THREE.CircleGeometry(1.4, 32); // Reduced from 1.9 to 1.4
-            // const sauceMaterial = new THREE.MeshBasicMaterial({ color: 0xFF6347 });
-            // sauce = new THREE.Mesh(sauceGeometry, sauceMaterial);
-            // sauce.position.y = 0.16;
-            // sauce.rotation.x = -Math.PI / 2;
-            // scene.add(sauce);
-            
             // Add cheese texture (yellow circle on top of sauce) - smaller size
             const cheeseGeometry = new THREE.CircleGeometry(1.35, 32); // Reduced from 1.85 to 1.35
             const cheeseMaterial = new THREE.MeshBasicMaterial({ color: 0xFFD700 });
@@ -961,9 +882,6 @@
             // Start animation
             animate();
             
-            // Update countdown (time since last raise - always increasing)
-            setInterval(updateTimeSinceRaise, 1000);
-            
             // Update resources every second
             setInterval(updateResources, 1000);
             
@@ -981,12 +899,6 @@
                     }, 100);
                 }
             }, 500);
-            
-            // Add command input handling
-            setupCommandInput();
-            
-            // Update UI elements
-            updateMoraleDisplay();
             
             // Update button states
             updateButtonStates();
@@ -1099,121 +1011,11 @@
             renderer.setSize(window.innerWidth / 2, window.innerHeight);
         }
         
-        function updateTimeSinceRaise() {
-            const countdownElement = document.getElementById('countdown');
-            const currentTime = countdownElement.textContent;
-            
-            let [days, hours, minutes] = currentTime.split(':').map(Number);
-            
-            minutes++;
-            if (minutes >= 60) {
-                minutes = 0;
-                hours++;
-                if (hours >= 24) {
-                    hours = 0;
-                    days++;
-                }
-            }
-            
-            countdownElement.textContent = `${days.toString().padStart(3, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-        }
-        
-        function updateMoraleDisplay() {
-            const moraleStatus = document.getElementById('morale-status');
-            const moraleEffectiveness = document.getElementById('morale-effectiveness');
-            const satisfactionLevel = document.getElementById('satisfaction-level');
-            const progressFill = document.getElementById('pizza-progress');
-            const hexContainer = document.getElementById('morale-hexes');
-            const managerScoreElement = document.getElementById('manager-score');
-            
-            // Update morale status text
-            const moraleTexts = ['LOW', 'MODERATE', 'ADEQUATE', 'TEMPORARY'];
-            moraleStatus.textContent = moraleTexts[moraleLevel];
-            
-            // Update effectiveness percentage (10-50%)
-            const effectiveness = 10 + (moraleLevel * 10);
-            moraleEffectiveness.textContent = effectiveness.toFixed(1);
-            
-            // Update satisfaction level
-            const satisfactionTexts = ['LOW', 'MINIMAL', 'TEMPORARY', 'FLEETING'];
-            satisfactionLevel.textContent = satisfactionTexts[moraleLevel];
-            
-            // Update progress bar (20-80%)
-            const progressWidth = 20 + (moraleLevel * 15);
-            progressFill.style.width = `${progressWidth}%`;
-            
-            // Update hex indicators
-            let hexHTML = '';
-            for (let i = 0; i < 5; i++) {
-                if (i <= moraleLevel + 1) {
-                    hexHTML += '<div class="hex hex-active"></div>';
-                } else {
-                    hexHTML += '<div class="hex hex-inactive"></div>';
-                }
-            }
-            hexContainer.innerHTML = hexHTML;
-            
-            // Update manager score
-            managerScoreElement.textContent = managerScore;
-            
-            // Update cost savings
-            const baseSaving = 4250;
-            const costSaving = baseSaving + (managerScore * 25);
-            document.getElementById('cost-saving').textContent = costSaving.toLocaleString();
-            
-            // Update pizzas display
-            document.getElementById('pizza-coins').textContent = Math.floor(pizzaCoins);
-            document.getElementById('pizza-coins-per-second').textContent = pizzaCoinsPerSecond.toFixed(1);
-            
-            // Update cost displays
-            for (const command in upgradeCosts) {
-                const costElement = document.getElementById(`${command}-cost`);
-                if (costElement) {
-                    costElement.textContent = upgradeCosts[command];
-                }
-                
-                // Update tooltip cost displays
-                const tooltipCostElement = document.getElementById(`tooltip-${command}-cost`);
-                if (tooltipCostElement) {
-                    tooltipCostElement.textContent = upgradeCosts[command];
-                }
-                
-                // Update item counts
-                const countElement = document.getElementById(`${command}-count`);
-                if (countElement) {
-                    countElement.textContent = upgradeCounts[command];
-                }
-            }
-            
-            // Update button states based on affordability
-            updateButtonStates();
-            
-        }
-        
-        function increaseMorale() {
-            if (moraleLevel < 3) {
-                moraleLevel++;
-                managerScore += 50;
-                updateMoraleDisplay();
-                return true;
-            }
-            return false;
-        }
-        
-        function decreaseMorale(amount = 1) {
-            moraleLevel -= amount;
-            updateMoraleDisplay();
-            showNotification(`MORALE DECREASED TO ${moraleLevel < 0 ? 'CRITICAL' : ['LOW', 'MODERATE', 'ADEQUATE', 'TEMPORARY'][Math.max(0, moraleLevel)]}`);
-        }
-        
         function addTopping() {
             // Since we only have pepperoni, this function will just increase the production rate
             // without actually adding new toppings
-            
             // Increase pizzas per second
             pizzaCoinsPerSecond += 0.1;
-            
-            updateMoraleDisplay();
             return 'pepperoni'; // Always return pepperoni
         }
         
@@ -1224,8 +1026,8 @@
             // Add pizzas based on rate
             pizzaCoins += pizzaCoinsPerSecond;
             
-            // Update display
-            updateMoraleDisplay();
+            // Update the display
+            updateDisplay();
             
             // Save game state every 10 seconds
             const now = Date.now();
@@ -1263,6 +1065,9 @@
             
             // Add pizzas
             pizzaCoins += 1;
+            
+            // Update the display
+            updateDisplay();
             
             // Play click sound
             const clickSound = document.getElementById('pizza-click-sound');
@@ -1304,11 +1109,63 @@
                 pizzaCanvas.removeChild(floatingText);
             }, 1500);
             
-            // Update display
-            updateMoraleDisplay();
-            
             // Update button states
             updateButtonStates();
+        }
+        
+        // Function to update the display with current values
+        function updateDisplay() {
+            // Update pizza coins display
+            document.getElementById('pizza-coins').textContent = Math.floor(pizzaCoins);
+            
+            // Update pizza coins per second display
+            document.getElementById('pizza-coins-per-second').textContent = pizzaCoinsPerSecond.toFixed(1);
+            
+            // Update manager score
+            document.getElementById('manager-score').textContent = managerScore;
+            
+            // Update cost saving display (just for visual effect)
+            document.getElementById('cost-saving').textContent = (4250 + Math.floor(pizzaCoins)).toLocaleString();
+            
+            // Update morale effectiveness
+            document.getElementById('morale-effectiveness').textContent = (12.3 + (pizzaCoinsPerSecond * 2)).toFixed(1);
+            
+            // Update satisfaction level based on pizzaCoinsPerSecond
+            const satisfactionElement = document.getElementById('satisfaction-level');
+            if (pizzaCoinsPerSecond < 1) {
+                satisfactionElement.textContent = 'LOW';
+                satisfactionElement.style.color = '#FF6347'; // Red
+            } else if (pizzaCoinsPerSecond < 10) {
+                satisfactionElement.textContent = 'MODERATE';
+                satisfactionElement.style.color = '#FFA500'; // Orange
+            } else if (pizzaCoinsPerSecond < 100) {
+                satisfactionElement.textContent = 'ADEQUATE';
+                satisfactionElement.style.color = '#FFFF00'; // Yellow
+            } else {
+                satisfactionElement.textContent = 'TEMPORARY';
+                satisfactionElement.style.color = '#32CD32'; // Green
+            }
+            
+            // Update upgrade counts and costs
+            for (const upgrade in upgradeCounts) {
+                // Update count badges
+                const countElement = document.getElementById(`${upgrade}-count`);
+                if (countElement) {
+                    countElement.textContent = upgradeCounts[upgrade];
+                }
+                
+                // Update cost displays
+                const costElement = document.getElementById(`${upgrade}-cost`);
+                if (costElement) {
+                    costElement.textContent = upgradeCosts[upgrade];
+                }
+                
+                // Update tooltip costs
+                const tooltipCostElement = document.getElementById(`tooltip-${upgrade}-cost`);
+                if (tooltipCostElement) {
+                    tooltipCostElement.textContent = upgradeCosts[upgrade];
+                }
+            }
         }
         
         function startGame() {
@@ -1346,8 +1203,10 @@
                     'corporate': 0,
                 };
                 
-                updateMoraleDisplay();
             }
+            
+            // Update the display
+            updateDisplay();
             
             // Show welcome message
             showNotification("MANAGEMENT SIMULATION STARTED - DEPLOY PIZZA STRATEGICALLY");
@@ -1388,289 +1247,55 @@
             };
             
             updateToppings();
-            updateMoraleDisplay();
-            
-            // Restart obstacles
-            startObstacles();
             
             gameActive = true;
         }
-        
-        
-        function triggerRandomObstacle() {
-            const event = gameEvents[Math.floor(Math.random() * gameEvents.length)];
-            showNotification(event.message);
-            
-            const outputElement = document.getElementById('terminal-output');
-            const eventLine = document.createElement('div');
-            eventLine.textContent = `SYSTEM> ${event.message}`;
-            eventLine.style.color = '#FF0000';
-            outputElement.appendChild(eventLine);
-            
-            // Scroll to bottom of output
-            outputElement.scrollTop = outputElement.scrollHeight;
-            
-            // Apply effect based on event type - only decrease morale, don't deduct points
-            switch(event.type) {
-                case 'deadline':
-                    decreaseMorale();
-                    break;
-                case 'bug':
-                    decreaseMorale();
-                    break;
-                case 'competitor':
-                    decreaseMorale(2);
-                    break;
-                case 'meeting':
-                    // No effect on score
-                    break;
-                case 'overtime':
-                    decreaseMorale();
-                    break;
-                case 'review':
-                    // No effect on score
-                    break;
-            }
-            
-            updateMoraleDisplay();
-        }
-        
         function showNotification(message) {
             const notification = document.createElement('div');
             notification.className = 'notification';
-            notification.textContent = message;
+            
+            // Create container for message and close button
+            const messageContainer = document.createElement('div');
+            messageContainer.className = 'notification-content';
+            messageContainer.textContent = message;
+            messageContainer.style.fontSize = '18px'; // Increased font size
+            
+            // Create close button
+            const closeButton = document.createElement('div');
+            closeButton.className = 'notification-close';
+            closeButton.textContent = 'x';
+            closeButton.style.cursor = 'pointer';
+            closeButton.style.marginLeft = '10px';
+            closeButton.style.fontSize = '18px'; // Increased font size
+            closeButton.style.fontWeight = 'bold';
+            
+            // Add event listener to close button
+            closeButton.addEventListener('click', () => {
+                document.body.removeChild(notification);
+            });
+            
+            // Add message and close button to notification
+            notification.appendChild(messageContainer);
+            notification.appendChild(closeButton);
+            
+            // Style the notification as a flex container
+            notification.style.display = 'flex';
+            notification.style.justifyContent = 'space-between';
+            notification.style.alignItems = 'center';
+            notification.style.fontSize = '18px'; // Increased font size for the entire notification
+            
+            notification.style.top = '50%'; // Move to vertical center
+            notification.style.transform = 'translate(-50%, -50%)'; // Center both horizontally and vertically
             document.body.appendChild(notification);
             
             // Remove notification after animation completes
             setTimeout(() => {
-                document.body.removeChild(notification);
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
             }, 4000);
         }
-        
-        // Setup command input functionality
-        function setupCommandInput() {
-            const inputElement = document.querySelector('.command-input');
-            const outputElement = document.getElementById('terminal-output');
-            
-            // Command responses
-            const commands = {
-                'help': 'Available commands: help, status, requestRaise, morePizza, ping, motivation, startProject, login, budget, abort, version, pizzaParty, addTopping, rotatePizza, increaseBudget',
-                'status': 'All systems operational. Morale at critical levels. Pizza reserves at 65%.',
-                'requestraise': 'ERROR: Raise request denied. Have you considered the value of free pizza instead?',
-                'morepizza': 'Ordering more pizza. ETA: 30 minutes. Note: This will be deducted from your team budget.',
-                'ping': 'Pinging developers... Response: "We need actual compensation, not food."',
-                'motivation': 'Generating motivational quote: "In Pizza We Trust, In Raises We Bust."',
-                'startproject': 'New project initiated. Timeline: Unrealistic. Resources: Insufficient. Pizza: Abundant.',
-                'login': 'Welcome, Middle Manager #4281. Pizza party authorization granted.',
-                'budget': 'Team Budget: $0 for raises, $5000 for pizza parties and team building exercises.',
-                'abort': 'Cannot abort pizza party protocol. It is hardcoded into company culture.',
-                'version': 'IT Pizza Tracker v2.0.0 - "Management Morale Enhancement" - Build 2025.04',
-                'deliverpizza': 'Pizza delivery initiated. Remember: A fed developer is almost as good as a well-paid one!'
-            };
-            
-            // Default error response
-            const defaultResponse = 'Command not recognized. Type "help" for available commands.';
-            
-            // Handle Enter key press
-            inputElement.addEventListener('keydown', function(event) {
-                if (event.key === 'Enter') {
-                    const command = this.value.toLowerCase().trim();
-                    
-                    // Display command in terminal output
-                    const commandLine = document.createElement('div');
-                    commandLine.textContent = `IT> ${this.value}`;
-                    commandLine.style.color = '#FF6347';
-                    outputElement.appendChild(commandLine);
-                    
-                    // Process command and display response
-                    const response = document.createElement('div');
-                    
-                    // Game commands
-                    if (command === 'pizzaparty') {
-                        if (!gameActive) {
-                            response.textContent = 'Please start the management simulation first.';
-                        } else if (pizzaCoins < upgradeCosts['pizzaparty']) {
-                            response.textContent = `Not enough Pizzas. Need ${upgradeCosts['pizzaparty']} pizzas.`;
-                        } else {
-                            const success = increaseMorale();
-                            if (success) {
-                                // Deduct cost
-                                pizzaCoins -= upgradeCosts['pizzaparty'];
-                                
-                                // Increase cost for next time
-                                upgradeCosts['pizzaparty'] = Math.floor(upgradeCosts['pizzaparty'] * upgradeMultipliers['pizzaparty']);
-                                
-                                // Increment upgrade count
-                                upgradeCounts['pizzaparty']++;
-                                
-                                // Recalculate pizzas per second
-                                pizzaCoinsPerSecond = calculatePizzasPerSecond();
-                                
-                                response.textContent = `New oven installed! Pizza party scheduled. Developers temporarily distracted from compensation issues. +50 MANAGER POINTS. Pizza production increased by 100%! Next oven will cost ${upgradeCosts['pizzaparty']} pizzas.`;
-                                
-                                // Save game state after purchase
-                                saveGameState();
-                                
-                                // Update button states
-                                updateButtonStates();
-                            } else {
-                                response.textContent = 'WARNING: Maximum ovens reached. Developers becoming immune to pizza-based manipulation.';
-                            }
-                        }
-                    } else if (command === 'addtopping') {
-                        if (!gameActive) {
-                            response.textContent = 'Please start the management simulation first.';
-                        } else if (pizzaCoins < upgradeCosts['addtopping']) {
-                            response.textContent = `Not enough Pizzas. Need ${upgradeCosts['addtopping']} pizzas.`;
-                        } else {
-                            const newTopping = addTopping();
-                            if (newTopping) {
-                                // Deduct cost
-                                pizzaCoins -= upgradeCosts['addtopping'];
-                                
-                                // Increase cost for next time
-                                upgradeCosts['addtopping'] = Math.floor(upgradeCosts['addtopping'] * upgradeMultipliers['addtopping']);
-                                
-                                // Increment upgrade count
-                                upgradeCounts['addtopping']++;
-                                
-                                // Recalculate pizzas per second
-                                pizzaCoinsPerSecond = calculatePizzasPerSecond();
-                                
-                                const toppingNames = {
-                                    'pepperoni': 'More Pepperoni'
-                                };
-                                response.textContent = `${toppingNames[newTopping]} added to pizza! Developers momentarily distracted by extra pepperoni. +25 MANAGER POINTS. Pizza production increased by 50%! Next topping will cost ${upgradeCosts['addtopping']} pizzas.`;
-                                
-                                // Save game state after purchase
-                                saveGameState();
-                                
-                                // Update button states
-                                updateButtonStates();
-                            } else {
-                                response.textContent = 'ERROR: Maximum toppings reached. Pizza optimization complete.';
-                            }
-                        }
-                    } else if (command === 'increasebudget') {
-                        if (!gameActive) {
-                            response.textContent = 'Please start the management simulation first.';
-                        } else if (pizzaCoins < upgradeCosts['increasebudget']) {
-                            response.textContent = `Not enough Pizzas. Need ${upgradeCosts['increasebudget']} pizzas.`;
-                        } else {
-                            // Deduct cost
-                            pizzaCoins -= upgradeCosts['increasebudget'];
-                            
-                            // Increase cost for next time
-                            upgradeCosts['increasebudget'] = Math.floor(upgradeCosts['increasebudget'] * upgradeMultipliers['increasebudget']);
-                            
-                            // Increment upgrade count
-                            upgradeCounts['increasebudget']++;
-                            
-                            // Recalculate pizzas per second
-                            pizzaCoinsPerSecond = calculatePizzasPerSecond();
-                            
-                            managerScore += 100;
-                            
-                            response.textContent = `Budget for pizza increased! Salary budget decreased proportionally. +100 MANAGER POINTS. Pizza production increased by 400%! Next budget increase will cost ${upgradeCosts['increasebudget']} pizzas.`;
-                            
-                            // Save game state after purchase
-                            saveGameState();
-                            
-                            // Update button states
-                            updateButtonStates();
-                        }
-                    } else if (command === 'rotatepizza') {
-                        if (!gameActive) {
-                            response.textContent = 'Please start the management simulation first.';
-                        } else if (pizzaCoins < upgradeCosts['rotatepizza']) {
-                            response.textContent = `Not enough Pizzas. Need ${upgradeCosts['rotatepizza']} pizzas.`;
-                        } else {
-                            // Deduct cost
-                            pizzaCoins -= upgradeCosts['rotatepizza'];
-                            
-                            // No cooldown needed
-                            
-                            // Increase cost for next time
-                            upgradeCosts['rotatepizza'] = Math.floor(upgradeCosts['rotatepizza'] * upgradeMultipliers['rotatepizza']);
-                            
-                            // Increment upgrade count
-                            upgradeCounts['rotatepizza']++;
-                            
-                            // Update rotation speed
-                            rotationSpeed = rotationSpeed < 0.02 ? rotationSpeed * 1.5 : 0.007;
-                            
-                            // Recalculate pizzas per second
-                            pizzaCoinsPerSecond = calculatePizzasPerSecond();
-                            
-                            response.textContent = `Pizza rotation ${rotationSpeed > 0.01 ? 'accelerated' : 'normalized'}. Developers mesmerized by spinning pizza. +10 MANAGER POINTS. Pizza production increased by 10%! Next rotation change will cost ${upgradeCosts['rotatepizza']} pizzas.`;
-                            managerScore += 10;
-                            
-                            // Save game state after purchase
-                            saveGameState();
-                            
-                            // Update button states
-                            updateButtonStates();
-                            
-                            updateMoraleDisplay();
-                        }
-                    }
-                    // Special case for pizza manipulation
-                    else if (command === 'rotate faster') {
-                        rotationSpeed *= 2;
-                        response.textContent = 'Pizza rotation speed increased. This does not increase productivity.';
-                    } else if (command === 'rotate slower') {
-                        rotationSpeed /= 2;
-                        response.textContent = 'Pizza rotation speed decreased. Just like your motivation.';
-                    } else if (command === 'give raises') {
-                        document.body.classList.add('alarm');
-                        setTimeout(() => {
-                            const warningDiv = document.createElement('div');
-                            warningDiv.textContent = 'CRITICAL ERROR: RAISES DO NOT COMPUTE';
-                            warningDiv.style.color = 'red';
-                            warningDiv.style.fontWeight = 'bold';
-                            outputElement.appendChild(warningDiv);
-                            
-                            // Add explosion effect
-                            const container = document.querySelector('#container');
-                            container.innerHTML = '';
-                            container.style.backgroundColor = 'red';
-                            
-                            setTimeout(() => {
-                                container.style.backgroundColor = 'white';
-                                setTimeout(() => {
-                                    container.style.backgroundColor = 'black';
-                                    container.innerHTML = '<div style="color: white; text-align: center; margin-top: 40vh; font-size: 24px;">SYSTEM REBOOTING... PIZZA PARTY SCHEDULED INSTEAD</div>';
-                                    
-                                    // Reload the page after 3 seconds
-                                    setTimeout(() => {
-                                        location.reload();
-                                    }, 3000);
-                                }, 200);
-                            }, 200);
-                        }, 2000);
-                        response.textContent = 'WARNING: Dangerous command detected. This will crash the corporate finance system.';
-                    } else if (command === 'quit') {
-                        response.textContent = 'You cannot quit. You are conditioned to accept pizza as payment.';
-                    } else {
-                        response.textContent = commands[command] || defaultResponse;
-                    }
-                    
-                    outputElement.appendChild(response);
-                    
-                    // Scroll to bottom of output
-                    outputElement.scrollTop = outputElement.scrollHeight;
-                    
-                    // Clear input
-                    this.value = '';
-                }
-            });
-        }
-        
-        // Make input field active when clicked
-        document.querySelector('.command-input').addEventListener('click', function() {
-            this.focus();
-        });
-        
+
         // Setup command buttons
         function setupCommandButtons() {
             // Remove existing event listeners to prevent duplicates
@@ -1712,48 +1337,44 @@
                     return;
                 }
                 
-                const success = increaseMorale();
-                if (success) {
-                    // Deduct cost
-                    pizzaCoins -= upgradeCosts['pizzaparty'];
-                    
-                    // No cooldown needed
-                    
-                    // Increase cost for next time
-                    upgradeCosts['pizzaparty'] = Math.floor(upgradeCosts['pizzaparty'] * upgradeMultipliers['pizzaparty']);
-                    
-                    // Increment upgrade count
-                    upgradeCounts['pizzaparty']++;
-                    
-                    // Recalculate pizzas per second
-                    pizzaCoinsPerSecond = calculatePizzasPerSecond();
-                    
-                    // Add to terminal output
-                    const outputElement = document.getElementById('terminal-output');
-                    const commandLine = document.createElement('div');
-                    commandLine.textContent = `STORE> Purchased Pizza Oven`;
-                    commandLine.style.color = '#FF6347';
-                    outputElement.appendChild(commandLine);
-                    
-                    const response = document.createElement('div');
-                    response.textContent = `New oven installed! Pizza party scheduled. Developers temporarily distracted from compensation issues. +50 MANAGER POINTS. Pizza production increased by 100%! Next oven will cost ${upgradeCosts['pizzaparty']} pizzas.`;
-                    outputElement.appendChild(response);
-                    
-                    // Scroll to bottom of output
-                    outputElement.scrollTop = outputElement.scrollHeight;
-                    
-                    showNotification("New Pizza Oven installed! Morale temporarily boosted.");
-                    
-                    // Save game state after purchase
-                    saveGameState();
-                    
-                    // Update button states
-                    updateButtonStates();
-                } else {
-                    showNotification('WARNING: Maximum ovens reached. Developers becoming immune to pizza-based manipulation.');
-                }
+                // Deduct cost
+                pizzaCoins -= upgradeCosts['pizzaparty'];
                 
-                updateMoraleDisplay();
+                // No cooldown needed
+                
+                // Increase cost for next time
+                upgradeCosts['pizzaparty'] = Math.floor(upgradeCosts['pizzaparty'] * upgradeMultipliers['pizzaparty']);
+                
+                // Increment upgrade count
+                upgradeCounts['pizzaparty']++;
+                
+                // Recalculate pizzas per second
+                pizzaCoinsPerSecond = calculatePizzasPerSecond();
+                
+                // Update the display
+                updateDisplay();
+                
+                // Add to terminal output
+                const outputElement = document.getElementById('terminal-output');
+                const commandLine = document.createElement('div');
+                commandLine.textContent = `STORE> Purchased Pizza Oven`;
+                commandLine.style.color = '#FF6347';
+                outputElement.appendChild(commandLine);
+                
+                const response = document.createElement('div');
+                response.textContent = `New oven installed! Pizza party scheduled. Developers temporarily distracted from compensation issues. +50 MANAGER POINTS. Pizza production increased by 100%! Next oven will cost ${upgradeCosts['pizzaparty']} pizzas.`;
+                outputElement.appendChild(response);
+                
+                // Scroll to bottom of output
+                outputElement.scrollTop = outputElement.scrollHeight;
+                
+                showNotification("New Pizza Oven installed! Morale temporarily boosted.");
+                
+                // Save game state after purchase
+                saveGameState();
+                
+                // Update button states
+                updateButtonStates();
             });
             
             // Add Topping button
@@ -1812,7 +1433,6 @@
                     showNotification('ERROR: Maximum toppings reached. Pizza optimization complete.');
                 }
                 
-                updateMoraleDisplay();
             });
             
             // Increase Budget button
@@ -1840,6 +1460,9 @@
                 // Recalculate pizzas per second
                 pizzaCoinsPerSecond = calculatePizzasPerSecond();
                 
+                // Update the display
+                updateDisplay();
+                
                 managerScore += 100;
                 
                 // Add to terminal output
@@ -1864,7 +1487,6 @@
                 // Update button states
                 updateButtonStates();
                 
-                updateMoraleDisplay();
             });
             
             // Display Stand button
@@ -1881,8 +1503,6 @@
                 // Deduct cost
                 pizzaCoins -= upgradeCosts['rotatepizza'];
                 
-                // No cooldown needed
-                
                 // Increase cost for next time
                 upgradeCosts['rotatepizza'] = Math.floor(upgradeCosts['rotatepizza'] * upgradeMultipliers['rotatepizza']);
                 
@@ -1894,6 +1514,9 @@
                 
                 // Recalculate pizzas per second
                 pizzaCoinsPerSecond = calculatePizzasPerSecond();
+                
+                // Update the display
+                updateDisplay();
                 
                 // Add to terminal output
                 const outputElement = document.getElementById('terminal-output');
@@ -1918,7 +1541,104 @@
                 // Update button states
                 updateButtonStates();
                 
-                updateMoraleDisplay();
+            });
+            
+            // Motivational Poster button
+            document.getElementById('motivational-button').addEventListener('click', function() {
+                if (!gameActive) return;
+                
+                if (pizzaCoins < upgradeCosts['motivational']) {
+                    showNotification(`Not enough Pizzas. Need ${upgradeCosts['motivational']} pizzas.`);
+                    return;
+                }
+                
+                // Deduct cost
+                pizzaCoins -= upgradeCosts['motivational'];
+                
+                // Increase cost for next time
+                upgradeCosts['motivational'] = Math.floor(upgradeCosts['motivational'] * 1.5);
+                
+                // Increment upgrade count
+                upgradeCounts['motivational']++;
+                
+                // Recalculate pizzas per second
+                pizzaCoinsPerSecond = calculatePizzasPerSecond();
+                
+                // Update the display
+                updateDisplay();
+                
+                managerScore += 200;
+                
+                // Add to terminal output
+                const outputElement = document.getElementById('terminal-output');
+                const commandLine = document.createElement('div');
+                commandLine.textContent = `STORE> Purchased Motivational Poster`;
+                commandLine.style.color = '#FF6347';
+                outputElement.appendChild(commandLine);
+                
+                const response = document.createElement('div');
+                response.textContent = `"Hang in there" cat poster installed! Developers reminded they could be unemployed. +200 MANAGER POINTS. Pizza production increased by 1000%! Next poster will cost ${upgradeCosts['motivational']} pizzas.`;
+                outputElement.appendChild(response);
+                
+                // Scroll to bottom of output
+                outputElement.scrollTop = outputElement.scrollHeight;
+                
+                showNotification(`Motivational poster installed! Morale temporarily boosted!`);
+                
+                // Save game state after purchase
+                saveGameState();
+                
+                // Update button states
+                updateButtonStates();
+            });
+            
+            // Corporate Memo button
+            document.getElementById('corporate-button').addEventListener('click', function() {
+                if (!gameActive) return;
+                
+                if (pizzaCoins < upgradeCosts['corporate']) {
+                    showNotification(`Not enough Pizzas. Need ${upgradeCosts['corporate']} pizzas.`);
+                    return;
+                }
+                
+                // Deduct cost
+                pizzaCoins -= upgradeCosts['corporate'];
+                
+                // Increase cost for next time
+                upgradeCosts['corporate'] = Math.floor(upgradeCosts['corporate'] * 1.5);
+                
+                // Increment upgrade count
+                upgradeCounts['corporate']++;
+                
+                // Recalculate pizzas per second
+                pizzaCoinsPerSecond = calculatePizzasPerSecond();
+                
+                // Update the display
+                updateDisplay();
+                
+                managerScore += 500;
+                
+                // Add to terminal output
+                const outputElement = document.getElementById('terminal-output');
+                const commandLine = document.createElement('div');
+                commandLine.textContent = `STORE> Purchased Corporate Memo`;
+                commandLine.style.color = '#FF6347';
+                outputElement.appendChild(commandLine);
+                
+                const response = document.createElement('div');
+                response.textContent = `Corporate memo distributed! "Pizza builds team spirit better than raises." Developers too demoralized to argue. +500 MANAGER POINTS. Pizza production increased by 5000%! Next memo will cost ${upgradeCosts['corporate']} pizzas.`;
+                outputElement.appendChild(response);
+                
+                // Scroll to bottom of output
+                outputElement.scrollTop = outputElement.scrollHeight;
+                
+                showNotification(`Corporate memo distributed! Morale temporarily boosted!`);
+                
+                // Save game state after purchase
+                saveGameState();
+                
+                // Update button states
+                updateButtonStates();
             });
         }
         
@@ -1990,7 +1710,7 @@
                 rotationSpeed = gameState.rotationSpeed;
                 
                 updateToppings();
-                updateMoraleDisplay();
+                updateDisplay(); // Update the display after loading game state
                 return true;
             }
             
